@@ -4,13 +4,15 @@ declare(strict_types=1);
 
 namespace App\Shared\Functional;
 
+use App\Shared\Functional\Laws\Functor;
+
 /**
  * A lazy computation. Nothing inside the thunk runs until {@see self::run()} is called,
  * and a task (or any task derived from it) can only be executed once.
  *
  * @template T
  */
-final class Task
+final class Task implements Functor
 {
     /**
      * @var \Closure(): T

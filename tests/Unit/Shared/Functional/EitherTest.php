@@ -9,25 +9,30 @@ use PHPUnit\Framework\TestCase;
 
 final class EitherTest extends TestCase
 {
-    public function testOk(): void
+    public function testRight(): void
     {
-        $either = Either::ok(42);
+        $either = Either::Right(42);
 
-        self::assertTrue($either->isOk());
-        self::assertFalse($either->isFail());
+        self::assertTrue($either->isRight());
+        self::assertFalse($either->isLeft());
     }
 
-    public function testFail(): void
+    public function testLeft(): void
     {
-        $either = Either::fail(['error']);
+        $either = Either::Left(['error']);
 
-        self::assertFalse($either->isOk());
-        self::assertTrue($either->isFail());
+        self::assertFalse($either->isRight());
+        self::assertTrue($either->isLeft());
     }
 
-    public function testMapTransformsOk(): void
+    public function testOfIsEquivalentToRight(): void
     {
-        self::assertSame(84, Either::ok(42)->map(static fn (int $value): int => $value * 2)->fold(
+        self::assertTrue(Either::of(42)->isRight());
+    }
+
+    public function testMapTransformsRight(): void
+    {
+        self::assertSame(84, Either::Right(42)->map(static fn (int $value): int => $value * 2)->fold(
             static fn (int $value): int => $value,
             static fn (array $errors): int => -1,
         ));
@@ -37,21 +42,21 @@ final class EitherTest extends TestCase
     {
         $called = false;
 
-        $either = Either::fail(['error'])->map(static function (int $value) use (&$called): int {
+        $either = Either::Left(['error'])->map(static function (int $value) use (&$called): int {
             $called = true;
 
             return $value;
         });
 
         self::assertFalse($called);
-        self::assertTrue($either->isFail());
+        self::assertTrue($either->isLeft());
     }
 
     public function testMapErrorTransformsFailure(): void
     {
         self::assertSame(
             ['wrapped'],
-            Either::fail(['error'])->mapError(static fn (array $errors): array => ['wrapped'])->fold(
+            Either::Left(['error'])->mapError(static fn (array $errors): array => ['wrapped'])->fold(
                 static fn (): array => [],
                 static fn (array $errors): array => $errors,
             ),
@@ -62,31 +67,31 @@ final class EitherTest extends TestCase
     {
         $called = false;
 
-        $either = Either::ok(1)->mapError(static function (array $errors) use (&$called): array {
+        $either = Either::Right(1)->mapError(static function (array $errors) use (&$called): array {
             $called = true;
 
             return $errors;
         });
 
-        self::assertTrue($either->isOk());
+        self::assertTrue($either->isRight());
         self::assertFalse($called);
     }
 
     public function testFlatMapChainsOnSuccess(): void
     {
-        $either = Either::ok(2)->flatMap(static fn (int $value): Either => Either::ok($value * 5));
+        $either = Either::Right(2)->flatMap(static fn (int $value): Either => Either::Right($value * 5));
 
-        self::assertTrue($either->isOk());
+        self::assertTrue($either->isRight());
     }
 
     public function testFlatMapShortCircuitsOnFailure(): void
     {
         $called = false;
 
-        $either = Either::fail(['first'])->flatMap(static function (int $value) use (&$called): Either {
+        $either = Either::Left(['first'])->flatMap(static function (int $value) use (&$called): Either {
             $called = true;
 
-            return Either::ok($value);
+            return Either::Right($value);
         });
 
         self::assertFalse($called);
@@ -99,18 +104,18 @@ final class EitherTest extends TestCase
     public function testFoldPicksTheMatchingBranch(): void
     {
         self::assertSame(
-            'ok:1',
-            Either::ok(1)->fold(
-                static fn (int $value): string => 'ok:'.$value,
-                static fn (array $errors): string => 'fail',
+            'right:1',
+            Either::Right(1)->fold(
+                static fn (int $value): string => 'right:'.$value,
+                static fn (array $errors): string => 'left',
             ),
         );
 
         self::assertSame(
-            'fail:2',
-            Either::fail(['a', 'b'])->fold(
-                static fn (): string => 'ok',
-                static fn (array $errors): string => 'fail:'.count($errors),
+            'left:2',
+            Either::Left(['a', 'b'])->fold(
+                static fn (): string => 'right',
+                static fn (array $errors): string => 'left:'.count($errors),
             ),
         );
     }

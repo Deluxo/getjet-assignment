@@ -4,21 +4,27 @@ declare(strict_types=1);
 
 namespace App\Shared\Functional;
 
+use App\Shared\Functional\EitherImpl\Left;
+use App\Shared\Functional\EitherImpl\Right;
+use App\Shared\Functional\Laws\Monad;
+
 /**
- * A value that is either a success ({@see self::ok()}) or a failure ({@see self::fail()}).
+ * A value that is either a success (Right) or a failure (Left).
  *
- * @template E
  * @template T
  */
-final readonly class Either
+abstract readonly class Either implements Monad
 {
     /**
-     * @param T $value
+     * @template U
+     *
+     * @param U $value
+     *
+     * @return Right<U>
      */
-    private function __construct(
-        private bool $ok,
-        private mixed $value,
-    ) {
+    public static function of(mixed $value): self
+    {
+        return new Right($value);
     }
 
     /**
@@ -26,93 +32,50 @@ final readonly class Either
      *
      * @param U $value
      *
-     * @return self<never, U>
+     * @return Right<U>
      */
-    public static function ok(mixed $value): self
+    public static function Right(mixed $value): self
     {
-        return new self(true, $value);
+        return new Right($value);
     }
 
     /**
-     * @template F
+     * @template E
      *
-     * @param F $error
+     * @param E $error
      *
-     * @return self<F, never>
+     * @return Left<E>
      */
-    public static function fail(mixed $error): self
+    public static function Left(mixed $error): self
     {
-        return new self(false, $error);
+        return new Left($error);
     }
 
-    public function isOk(): bool
-    {
-        return $this->ok;
-    }
+    abstract public function isRight(): bool;
 
-    public function isFail(): bool
+    public function isLeft(): bool
     {
-        return !$this->ok;
+        return !$this->isRight();
     }
 
     /**
-     * @template U
+     * @param callable $onRight
+     * @param callable $onLeft
      *
-     * @param callable(T): U $transform
-     *
-     * @return self<E, U>
+     * @return mixed
      */
-    public function map(callable $transform): self
-    {
-        if (!$this->ok) {
-            return self::fail($this->value);
-        }
-
-        return self::ok($transform($this->value));
-    }
+    abstract public function fold(callable $onRight, callable $onLeft): mixed;
 
     /**
-     * @template F
+     * @param callable $transform
      *
-     * @param callable(E): F $transform
-     *
-     * @return self<F, T>
+     * @return static
      */
     public function mapError(callable $transform): self
     {
-        if ($this->ok) {
-            return self::ok($this->value);
-        }
-
-        return self::fail($transform($this->value));
-    }
-
-    /**
-     * @template U
-     *
-     * @param callable(T): self<E, U> $transform
-     *
-     * @return self<E, U>
-     */
-    public function flatMap(callable $transform): self
-    {
-        if (!$this->ok) {
-            return self::fail($this->value);
-        }
-
-        return $transform($this->value);
-    }
-
-    /**
-     * @template U
-     *
-     * @param callable(T): U $onOk
-     * @param callable(E): U $onFail
-     *
-     * @return U
-     */
-    public function fold(callable $onOk, callable $onFail): mixed
-    {
-        return $this->ok ? $onOk($this->value) : $onFail($this->value);
+        return $this->fold(
+            static fn (mixed $value): self => new Right($value),
+            static fn (mixed $error): self => new Left($transform($error)),
+        );
     }
 }
