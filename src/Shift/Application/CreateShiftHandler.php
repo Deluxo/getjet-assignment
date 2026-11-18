@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Shift\Application;
 
-use App\Shift\Application\Port\CreateShift;
+use App\Shift\Domain\Port\In\CreateShift;
 
 final class CreateShiftHandler implements CreateShift
 {

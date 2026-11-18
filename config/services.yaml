@@ -12,4 +12,4 @@ services:
         arguments:
             $srcDir: '%kernel.project_dir%/src'
 
-    App\Shift\Application\Port\CreateShift: '@App\Shift\Application\CreateShiftHandler'
+    App\Shift\Domain\Port\In\CreateShift: '@App\Shift\Application\CreateShiftHandler'

@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Shift\Application\Port;
+namespace App\Shift\Domain\Port\In;
 
 interface CreateShift
 {

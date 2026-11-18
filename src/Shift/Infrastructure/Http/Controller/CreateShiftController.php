@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace App\Shift\Infrastructure\Symfony\Http\Controller;
+namespace App\Shift\Infrastructure\Http\Controller;
 
-use App\Shift\Application\Port\CreateShift;
+use App\Shift\Domain\Port\In\CreateShift;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;

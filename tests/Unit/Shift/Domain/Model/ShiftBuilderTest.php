@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace App\Tests\Unit\Shift\Domain;
+namespace App\Tests\Unit\Shift\Domain\Model;
 
 use App\Shared\Functional\Task;
-use App\Shift\Domain\ShiftBuilder;
+use App\Shift\Application\ShiftBuilder;
 use PHPUnit\Framework\TestCase;
 
 final class ShiftBuilderTest extends TestCase

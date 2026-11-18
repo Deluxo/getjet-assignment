@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Shift\Domain;
+namespace App\Shift\Application;
 
 use App\Shared\Error;
 use App\Shared\Functional\Either;
