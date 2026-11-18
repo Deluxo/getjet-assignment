@@ -8,11 +8,13 @@ use App\Shared\Error;
 use App\Shared\Functional\Either;
 use App\Shared\Functional\Task;
 use App\Shift\Domain\Port\In\CreateShift;
+use App\Shift\Domain\Port\Out\CreatedShift;
+use App\Shift\Domain\Port\Out\ShiftErrors;
 
 final class CreateShiftHandler implements CreateShift
 {
     /**
-     * @return Task<Either<list<Error>, string>>
+     * @return Task<Either<ShiftErrors, CreatedShift>>
      */
     public function create(string $employeeId, string $date, string $startTime, string $endTime, string $countryCode): Task
     {
@@ -20,10 +22,10 @@ final class CreateShiftHandler implements CreateShift
             $errors = self::validate($employeeId, $date, $startTime, $endTime, $countryCode);
 
             if ($errors !== []) {
-                return Either::Left($errors);
+                return Either::Left(new ShiftErrors($errors));
             }
 
-            return Either::Left([new NotImplementedError()]);
+            return Either::Left(new ShiftErrors([new NotImplementedError()]));
         });
     }
 

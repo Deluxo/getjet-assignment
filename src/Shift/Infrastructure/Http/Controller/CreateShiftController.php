@@ -4,9 +4,11 @@ declare(strict_types=1);
 
 namespace App\Shift\Infrastructure\Http\Controller;
 
-use App\Shared\Error;
+use App\Shared\Infrastructure\Api\Json\JsonApiTrait;
+use App\Shared\Infrastructure\Api\Json\ToJson;
 use App\Shift\Application\NotImplementedError;
 use App\Shift\Domain\Port\In\CreateShift;
+use App\Shift\Domain\Port\Out\ShiftErrors;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -14,6 +16,8 @@ use Symfony\Component\Routing\Attribute\Route;
 
 final class CreateShiftController
 {
+    use JsonApiTrait;
+
     public function __construct(private readonly CreateShift $createShift)
     {
     }
@@ -21,45 +25,33 @@ final class CreateShiftController
     #[Route('/shifts', methods: ['POST'])]
     public function __invoke(Request $request): Response
     {
-        try {
-            $payload = $request->toArray();
-        } catch (\JsonException) {
-            return new JsonResponse(['error' => 'Invalid JSON'], Response::HTTP_BAD_REQUEST);
-        }
+        return $this->parseJsonPayload($request)->fold(
+            onLeft: static fn (string $message): JsonResponse => new JsonResponse(['error' => $message], Response::HTTP_BAD_REQUEST),
+            onRight: function (array $payload): Response {
+                $fields = [
+                    'employee_id' => (string) ($payload['employee_id'] ?? ''),
+                    'date' => (string) ($payload['date'] ?? ''),
+                    'start_time' => (string) ($payload['start_time'] ?? ''),
+                    'end_time' => (string) ($payload['end_time'] ?? ''),
+                    'country_code' => (string) ($payload['country_code'] ?? ''),
+                ];
 
-        if (!\is_array($payload)) {
-            return new JsonResponse(['error' => 'Payload must be a JSON object'], Response::HTTP_BAD_REQUEST);
-        }
+                return $this->taskToJsonResponse(
+                    $this->createShift->create(
+                        $fields['employee_id'],
+                        $fields['date'],
+                        $fields['start_time'],
+                        $fields['end_time'],
+                        $fields['country_code'],
+                    ),
+                    onLeft: static function (ToJson $left): JsonResponse {
+                        if ($left instanceof ShiftErrors && $left->errors() !== [] && $left->errors()[0] instanceof NotImplementedError) {
+                            return new JsonResponse(['error' => 'Not implemented'], Response::HTTP_NOT_IMPLEMENTED);
+                        }
 
-        $fields = [
-            'employee_id' => (string) ($payload['employee_id'] ?? ''),
-            'date' => (string) ($payload['date'] ?? ''),
-            'start_time' => (string) ($payload['start_time'] ?? ''),
-            'end_time' => (string) ($payload['end_time'] ?? ''),
-            'country_code' => (string) ($payload['country_code'] ?? ''),
-        ];
-
-        $result = $this->createShift->create(
-            $fields['employee_id'],
-            $fields['date'],
-            $fields['start_time'],
-            $fields['end_time'],
-            $fields['country_code'],
-        )->run();
-
-        return $result->fold(
-            onRight: static fn (string $shiftId): JsonResponse => new JsonResponse(['id' => $shiftId], Response::HTTP_CREATED),
-            onLeft: static function (array $errors): JsonResponse {
-                if ($errors !== [] && $errors[0] instanceof NotImplementedError) {
-                    return new JsonResponse(['error' => 'Not implemented'], Response::HTTP_NOT_IMPLEMENTED);
-                }
-
-                $messages = array_map(
-                    static fn (Error $e): string => $e->message(),
-                    $errors,
+                        return new JsonResponse($left->toJson(), Response::HTTP_BAD_REQUEST);
+                    },
                 );
-
-                return new JsonResponse(['errors' => $messages], Response::HTTP_BAD_REQUEST);
             },
         );
     }
