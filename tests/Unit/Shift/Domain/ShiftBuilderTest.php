@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Tests\Unit\Shift\Domain;
 
-use App\Shared\Task;
+use App\Shared\Functional\Task;
 use App\Shift\Domain\ShiftBuilder;
 use PHPUnit\Framework\TestCase;
 

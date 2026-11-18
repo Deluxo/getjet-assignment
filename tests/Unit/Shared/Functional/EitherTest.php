@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace App\Tests\Unit\Shared;
+namespace App\Tests\Unit\Shared\Functional;
 
-use App\Shared\Either;
+use App\Shared\Functional\Either;
 use PHPUnit\Framework\TestCase;
 
 final class EitherTest extends TestCase

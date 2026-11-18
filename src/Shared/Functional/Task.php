@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Shared;
+namespace App\Shared\Functional;
 
 /**
  * A lazy computation. Nothing inside the thunk runs until {@see self::run()} is called,

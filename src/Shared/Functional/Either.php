@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Shared;
+namespace App\Shared\Functional;
 
 /**
  * A value that is either a success ({@see self::ok()}) or a failure ({@see self::fail()}).

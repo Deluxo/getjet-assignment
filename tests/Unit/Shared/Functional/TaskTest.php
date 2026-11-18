@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace App\Tests\Unit\Shared;
+namespace App\Tests\Unit\Shared\Functional;
 
-use App\Shared\Task;
+use App\Shared\Functional\Task;
 use PHPUnit\Framework\TestCase;
 
 final class TaskTest extends TestCase

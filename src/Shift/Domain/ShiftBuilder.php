@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace App\Shift\Domain;
 
-use App\Shared\Either;
 use App\Shared\Error;
-use App\Shared\Task;
+use App\Shared\Functional\Either;
+use App\Shared\Functional\Task;
 
 final class ShiftBuilder
 {
