@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Shift\Infrastructure\Http\Controller;
 
+use App\Shared\Error;
+use App\Shift\Application\NotImplementedError;
 use App\Shift\Domain\Port\In\CreateShift;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -29,32 +31,36 @@ final class CreateShiftController
             return new JsonResponse(['error' => 'Payload must be a JSON object'], Response::HTTP_BAD_REQUEST);
         }
 
-        $required = ['employee_id', 'date', 'start_time', 'end_time', 'country_code'];
+        $fields = [
+            'employee_id' => (string) ($payload['employee_id'] ?? ''),
+            'date' => (string) ($payload['date'] ?? ''),
+            'start_time' => (string) ($payload['start_time'] ?? ''),
+            'end_time' => (string) ($payload['end_time'] ?? ''),
+            'country_code' => (string) ($payload['country_code'] ?? ''),
+        ];
 
-        foreach ($required as $field) {
-            if (!isset($payload[$field]) || !\is_string($payload[$field])) {
-                return new JsonResponse(
-                    ['error' => sprintf('Missing or invalid field "%s".', $field)],
-                    Response::HTTP_BAD_REQUEST,
+        $result = $this->createShift->create(
+            $fields['employee_id'],
+            $fields['date'],
+            $fields['start_time'],
+            $fields['end_time'],
+            $fields['country_code'],
+        )->run();
+
+        return $result->fold(
+            onRight: static fn (string $shiftId): JsonResponse => new JsonResponse(['id' => $shiftId], Response::HTTP_CREATED),
+            onLeft: static function (array $errors): JsonResponse {
+                if ($errors !== [] && $errors[0] instanceof NotImplementedError) {
+                    return new JsonResponse(['error' => 'Not implemented'], Response::HTTP_NOT_IMPLEMENTED);
+                }
+
+                $messages = array_map(
+                    static fn (Error $e): string => $e->message(),
+                    $errors,
                 );
-            }
-        }
 
-        try {
-            $shiftId = $this->createShift->create(
-                (string) $payload['employee_id'],
-                (string) $payload['date'],
-                (string) $payload['start_time'],
-                (string) $payload['end_time'],
-                (string) $payload['country_code'],
-            );
-        } catch (\LogicException) {
-            return new JsonResponse(['error' => 'Not implemented'], Response::HTTP_NOT_IMPLEMENTED);
-        }
-
-        return new JsonResponse(
-            ['id' => $shiftId],
-            Response::HTTP_CREATED,
+                return new JsonResponse(['errors' => $messages], Response::HTTP_BAD_REQUEST);
+            },
         );
     }
 }
