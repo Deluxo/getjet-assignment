@@ -11,3 +11,5 @@ services:
     App\Shared\Infrastructure\Symfony\Console\ScaffoldDomainCommand:
         arguments:
             $srcDir: '%kernel.project_dir%/src'
+
+    App\Shift\Application\Port\CreateShift: '@App\Shift\Application\CreateShiftHandler'
