@@ -17,10 +17,15 @@ use Symfony\Component\Console\Output\OutputInterface;
 final class ScaffoldDomainCommand extends Command
 {
     private const DIRECTORIES = [
-        'Domain',
+        'Domain/Model',
+        'Domain/Port/In',
+        'Domain/Port/Out',
+        'Domain/Service',
         'Application',
-        'Infrastructure/Symfony',
-        'Infrastructure/Doctrine',
+        'Infrastructure/Persistence/Mapping',
+        'Infrastructure/Api',
+        'Infrastructure/Http/Controller',
+        'Infrastructure/Cli',
     ];
 
     public function __construct(private readonly string $srcDir)
@@ -75,21 +80,6 @@ final class ScaffoldDomainCommand extends Command
                 $this->createDirectory($directory);
                 $output->writeln(sprintf('created  %s', $displayPath));
             }
-
-            $gitkeep = $directory.'/.gitkeep';
-
-            if (is_file($gitkeep)) {
-                $output->writeln(sprintf('exists   %s/.gitkeep', $displayPath));
-                continue;
-            }
-
-            if (!$this->isEmptyDirectory($directory)) {
-                $output->writeln(sprintf('skipped  %s/.gitkeep (directory is not empty)', $displayPath));
-                continue;
-            }
-
-            $this->createFile($gitkeep);
-            $output->writeln(sprintf('created  %s/.gitkeep', $displayPath));
         }
     }
 
@@ -98,17 +88,5 @@ final class ScaffoldDomainCommand extends Command
         if (!@mkdir($directory, 0775, true) && !is_dir($directory)) {
             throw new \RuntimeException(sprintf('Unable to create directory "%s".', $directory));
         }
-    }
-
-    private function createFile(string $file): void
-    {
-        if (!@touch($file)) {
-            throw new \RuntimeException(sprintf('Unable to create file "%s".', $file));
-        }
-    }
-
-    private function isEmptyDirectory(string $directory): bool
-    {
-        return !(new \FilesystemIterator($directory, \FilesystemIterator::SKIP_DOTS))->valid();
     }
 }

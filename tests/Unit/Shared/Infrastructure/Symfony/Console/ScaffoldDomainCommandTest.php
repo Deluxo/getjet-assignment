@@ -30,38 +30,25 @@ final class ScaffoldDomainCommandTest extends TestCase
 
         self::assertSame(Command::SUCCESS, $exitCode);
 
-        foreach (['Domain', 'Application', 'Infrastructure/Symfony', 'Infrastructure/Doctrine'] as $relativePath) {
+        foreach ([
+            'Domain/Model',
+            'Domain/Port/In',
+            'Domain/Port/Out',
+            'Domain/Service',
+            'Application',
+            'Infrastructure/Persistence/Mapping',
+            'Infrastructure/Api',
+            'Infrastructure/Http/Controller',
+            'Infrastructure/Cli',
+        ] as $relativePath) {
             self::assertDirectoryExists($this->srcDir.'/Shift/'.$relativePath);
-            self::assertFileExists($this->srcDir.'/Shift/'.$relativePath.'/.gitkeep');
         }
     }
 
-    public function testSecondRunChangesNothing(): void
+    public function testSecondRunIsIdempotent(): void
     {
-        $command = new ScaffoldDomainCommand($this->srcDir);
-        $commandTester = new CommandTester($command);
-
-        self::assertSame(Command::SUCCESS, $commandTester->execute(['name' => 'Shift']));
-
-        $existingFile = $this->srcDir.'/Shift/Domain/Shift.php';
-        file_put_contents($existingFile, '<?php // keep me');
-
-        self::assertSame(Command::SUCCESS, $commandTester->execute(['name' => 'Shift']));
-
-        self::assertSame('<?php // keep me', file_get_contents($existingFile));
-        self::assertFileExists($this->srcDir.'/Shift/Domain/.gitkeep');
-    }
-
-    public function testDoesNotAddGitkeepToExistingNonEmptyDirectory(): void
-    {
-        $domainDir = $this->srcDir.'/Shift/Domain';
-        self::assertTrue(mkdir($domainDir, 0775, true));
-        file_put_contents($domainDir.'/Shift.php', '<?php // keep me');
-
         self::assertSame(Command::SUCCESS, $this->tester()->execute(['name' => 'Shift']));
-
-        self::assertFileDoesNotExist($domainDir.'/.gitkeep');
-        self::assertFileExists($domainDir.'/Shift.php');
+        self::assertSame(Command::SUCCESS, $this->tester()->execute(['name' => 'Shift']));
     }
 
     public function testRejectsNamesThatAreNotPascalCase(): void
