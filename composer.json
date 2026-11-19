@@ -58,6 +58,7 @@
     },
     "scripts": {
         "test": "phpunit",
+        "e2e": "phpunit tests/E2E",
         "analyse": "phpstan analyse",
         "check": [
             "@test",
