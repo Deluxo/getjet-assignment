@@ -22,7 +22,6 @@ final class CreateShiftController
     public function __invoke(Request $request): Response
     {
         return $this->parseJsonPayloadAs(
-            $request,
             CreateShiftRequest::class,
             [
                 'employee_id' => 'employeeId',
@@ -31,6 +30,7 @@ final class CreateShiftController
                 'end_time' => 'endTime',
                 'country_code' => 'countryCode',
             ],
+            $request,
         )
         |> TaskEither::fromEither(...)
         |> (fn($taskEither) => $taskEither->flatMap($this->createShift->invoke(...)))

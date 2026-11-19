@@ -51,8 +51,8 @@ final class JsonApiTraitTest extends TestCase
         self::assertSame(
             ['employee_id' => 'employee-123'],
             $result->fold(
-                onLeft: static fn (): array => [],
-                onRight: static fn (array $payload): array => $payload,
+                onLeft: static fn(): array => [],
+                onRight: static fn(array $payload): array => $payload,
             ),
         );
     }
@@ -83,7 +83,7 @@ final class JsonApiTraitTest extends TestCase
 
         $response = $this->host->unwrap(
             $task,
-            static fn (ToJson $left): JsonResponse => new JsonResponse(['hook' => true], Response::HTTP_NOT_IMPLEMENTED),
+            static fn(ToJson $left): JsonResponse => new JsonResponse(['hook' => true], Response::HTTP_NOT_IMPLEMENTED),
         );
 
         self::assertSame(Response::HTTP_NOT_IMPLEMENTED, $response->getStatusCode());
@@ -93,15 +93,15 @@ final class JsonApiTraitTest extends TestCase
     public function testParseAsHydratesMappedKeys(): void
     {
         $result = $this->host->parseAs(
-            $this->request('{"employee_id": "employee-123", "date": "2026-10-06"}'),
             TestRequest::class,
             ['employee_id' => 'employeeId', 'date' => 'date'],
+            $this->request('{"employee_id": "employee-123", "date": "2026-10-06"}'),
         );
 
         self::assertTrue($result->isRight());
         $request = $result->fold(
-            onLeft: static fn (): null => null,
-            onRight: static fn (TestRequest $value): TestRequest => $value,
+            onLeft: static fn(): null => null,
+            onRight: static fn(TestRequest $value): TestRequest => $value,
         );
 
         self::assertSame('employee-123', $request->employeeId);
@@ -111,15 +111,15 @@ final class JsonApiTraitTest extends TestCase
     public function testParseAsCoercesScalarValues(): void
     {
         $result = $this->host->parseAs(
-            $this->request('{"employee_id": 123}'),
             TestRequest::class,
             ['employee_id' => 'employeeId'],
+            $this->request('{"employee_id": 123}'),
         );
 
         self::assertTrue($result->isRight());
         $request = $result->fold(
-            onLeft: static fn (): null => null,
-            onRight: static fn (TestRequest $value): TestRequest => $value,
+            onLeft: static fn(): null => null,
+            onRight: static fn(TestRequest $value): TestRequest => $value,
         );
 
         self::assertSame('123', $request->employeeId);
@@ -128,15 +128,15 @@ final class JsonApiTraitTest extends TestCase
     public function testParseAsUsesConstructorDefaults(): void
     {
         $result = $this->host->parseAs(
-            $this->request('{"employee_id": "employee-123"}'),
             TestRequest::class,
             ['employee_id' => 'employeeId', 'date' => 'date'],
+            $this->request('{"employee_id": "employee-123"}'),
         );
 
         self::assertTrue($result->isRight());
         $request = $result->fold(
-            onLeft: static fn (): null => null,
-            onRight: static fn (TestRequest $value): TestRequest => $value,
+            onLeft: static fn(): null => null,
+            onRight: static fn(TestRequest $value): TestRequest => $value,
         );
 
         self::assertNull($request->date);
@@ -145,9 +145,9 @@ final class JsonApiTraitTest extends TestCase
     public function testParseAsReturnsLeftForMissingRequiredField(): void
     {
         $result = $this->host->parseAs(
-            $this->request('{}'),
             TestRequest::class,
             ['employee_id' => 'employeeId'],
+            $this->request('{}'),
         );
 
         self::assertSame('Missing required fields.', $this->leftValue($result));
@@ -156,9 +156,9 @@ final class JsonApiTraitTest extends TestCase
     public function testParseAsReturnsLeftForInvalidFieldType(): void
     {
         $result = $this->host->parseAs(
-            $this->request('{"employee_id": []}'),
             TestRequest::class,
             ['employee_id' => 'employeeId'],
+            $this->request('{"employee_id": []}'),
         );
 
         self::assertSame('Invalid field type.', $this->leftValue($result));
@@ -170,8 +170,8 @@ final class JsonApiTraitTest extends TestCase
     private function leftValue(Either $result): string
     {
         return $result->fold(
-            onLeft: static fn (string $message): string => $message,
-            onRight: static fn (): string => '',
+            onLeft: static fn(string $message): string => $message,
+            onRight: static fn(): string => '',
         );
     }
 
@@ -198,9 +198,9 @@ final class JsonApiTraitHost
      *
      * @return Either<string, T>
      */
-    public function parseAs(Request $request, string $class, array $map): Either
+    public function parseAs(string $class, array $map, Request $request): Either
     {
-        return $this->parseJsonPayloadAs($request, $class, $map);
+        return $this->parseJsonPayloadAs($class, $map, $request);
     }
 
     /**
@@ -240,6 +240,5 @@ final readonly class TestRequest
     public function __construct(
         public string $employeeId,
         public ?string $date = null,
-    ) {
-    }
+    ) {}
 }

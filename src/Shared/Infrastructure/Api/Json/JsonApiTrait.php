@@ -48,7 +48,7 @@ trait JsonApiTrait
      *
      * @return Either<string, T>
      */
-    private function parseJsonPayloadAs(Request $request, string $class, array $map): Either
+    private function parseJsonPayloadAs(string $class, array $map, Request $request): Either
     {
         return $this->parseJsonPayload($request)->flatMap(static function (array $payload) use ($class, $map): Either {
             $arguments = [];
