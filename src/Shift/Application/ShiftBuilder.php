@@ -5,8 +5,7 @@ declare(strict_types=1);
 namespace App\Shift\Application;
 
 use App\Shared\Error;
-use App\Shared\Functional\Either;
-use App\Shared\Functional\Task;
+use App\Shared\Functional\TaskEither;
 
 final class ShiftBuilder
 {
@@ -45,11 +44,11 @@ final class ShiftBuilder
     }
 
     /**
-     * @return Task<Either<Error[], Shift>>
+     * @return TaskEither<Error[], Shift>
      */
-    public function build(): Task
+    public function build(): TaskEither
     {
-        return Task::of(static function (): never {
+        return TaskEither::defer(static function (): never {
             throw new \LogicException('ShiftBuilder::build() is not implemented yet.');
         });
     }

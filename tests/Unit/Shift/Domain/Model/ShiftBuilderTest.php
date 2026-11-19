@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Tests\Unit\Shift\Domain\Model;
 
-use App\Shared\Functional\Task;
+use App\Shared\Functional\TaskEither;
 use App\Shift\Application\ShiftBuilder;
 use PHPUnit\Framework\TestCase;
 
@@ -61,7 +61,7 @@ final class ShiftBuilderTest extends TestCase
     {
         $builder = (new ShiftBuilder())->withEmployeeId('employee-123');
 
-        self::assertInstanceOf(Task::class, $builder->build());
+        self::assertInstanceOf(TaskEither::class, $builder->build());
     }
 
     public function testBuildIsNotImplementedYet(): void

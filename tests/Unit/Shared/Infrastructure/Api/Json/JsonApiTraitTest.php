@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Tests\Unit\Shared\Infrastructure\Api\Json;
 
 use App\Shared\Functional\Either;
-use App\Shared\Functional\Task;
+use App\Shared\Functional\TaskEither;
 use App\Shared\Infrastructure\Api\Json\JsonApiTrait;
 use App\Shared\Infrastructure\Api\Json\ToJson;
 use PHPUnit\Framework\TestCase;
@@ -59,7 +59,7 @@ final class JsonApiTraitTest extends TestCase
 
     public function testUnwrapReturnsCreatedForRight(): void
     {
-        $task = Task::of(static fn (): Either => Either::Right(new RightValue()));
+        $task = TaskEither::right(new RightValue());
 
         $response = $this->host->unwrap($task);
 
@@ -69,7 +69,7 @@ final class JsonApiTraitTest extends TestCase
 
     public function testUnwrapReturnsBadRequestForLeftByDefault(): void
     {
-        $task = Task::of(static fn (): Either => Either::Left(new LeftValue()));
+        $task = TaskEither::left(new LeftValue());
 
         $response = $this->host->unwrap($task);
 
@@ -79,7 +79,7 @@ final class JsonApiTraitTest extends TestCase
 
     public function testUnwrapDelegatesLeftToProvidedHook(): void
     {
-        $task = Task::of(static fn (): Either => Either::Left(new LeftValue()));
+        $task = TaskEither::left(new LeftValue());
 
         $response = $this->host->unwrap(
             $task,
@@ -88,6 +88,80 @@ final class JsonApiTraitTest extends TestCase
 
         self::assertSame(Response::HTTP_NOT_IMPLEMENTED, $response->getStatusCode());
         self::assertSame(['hook' => true], json_decode((string) $response->getContent(), true));
+    }
+
+    public function testParseAsHydratesMappedKeys(): void
+    {
+        $result = $this->host->parseAs(
+            $this->request('{"employee_id": "employee-123", "date": "2026-10-06"}'),
+            TestRequest::class,
+            ['employee_id' => 'employeeId', 'date' => 'date'],
+        );
+
+        self::assertTrue($result->isRight());
+        $request = $result->fold(
+            onLeft: static fn (): null => null,
+            onRight: static fn (TestRequest $value): TestRequest => $value,
+        );
+
+        self::assertSame('employee-123', $request->employeeId);
+        self::assertSame('2026-10-06', $request->date);
+    }
+
+    public function testParseAsCoercesScalarValues(): void
+    {
+        $result = $this->host->parseAs(
+            $this->request('{"employee_id": 123}'),
+            TestRequest::class,
+            ['employee_id' => 'employeeId'],
+        );
+
+        self::assertTrue($result->isRight());
+        $request = $result->fold(
+            onLeft: static fn (): null => null,
+            onRight: static fn (TestRequest $value): TestRequest => $value,
+        );
+
+        self::assertSame('123', $request->employeeId);
+    }
+
+    public function testParseAsUsesConstructorDefaults(): void
+    {
+        $result = $this->host->parseAs(
+            $this->request('{"employee_id": "employee-123"}'),
+            TestRequest::class,
+            ['employee_id' => 'employeeId', 'date' => 'date'],
+        );
+
+        self::assertTrue($result->isRight());
+        $request = $result->fold(
+            onLeft: static fn (): null => null,
+            onRight: static fn (TestRequest $value): TestRequest => $value,
+        );
+
+        self::assertNull($request->date);
+    }
+
+    public function testParseAsReturnsLeftForMissingRequiredField(): void
+    {
+        $result = $this->host->parseAs(
+            $this->request('{}'),
+            TestRequest::class,
+            ['employee_id' => 'employeeId'],
+        );
+
+        self::assertSame('Missing required fields.', $this->leftValue($result));
+    }
+
+    public function testParseAsReturnsLeftForInvalidFieldType(): void
+    {
+        $result = $this->host->parseAs(
+            $this->request('{"employee_id": []}'),
+            TestRequest::class,
+            ['employee_id' => 'employeeId'],
+        );
+
+        self::assertSame('Invalid field type.', $this->leftValue($result));
     }
 
     /**
@@ -117,10 +191,23 @@ final class JsonApiTraitHost
     }
 
     /**
-     * @param Task<Either<ToJson, ToJson>> $task
+     * @template T of object
+     *
+     * @param class-string<T> $class
+     * @param array<string, string> $map
+     *
+     * @return Either<string, T>
+     */
+    public function parseAs(Request $request, string $class, array $map): Either
+    {
+        return $this->parseJsonPayloadAs($request, $class, $map);
+    }
+
+    /**
+     * @param TaskEither<ToJson, ToJson> $task
      * @param callable(ToJson): JsonResponse|null $onLeft
      */
-    public function unwrap(Task $task, ?callable $onLeft = null): JsonResponse
+    public function unwrap(TaskEither $task, ?callable $onLeft = null): JsonResponse
     {
         return $this->taskToJsonResponse($task, $onLeft);
     }
@@ -145,5 +232,14 @@ final class LeftValue implements ToJson
     public function toJson(): array
     {
         return ['errors' => ['boom']];
+    }
+}
+
+final readonly class TestRequest
+{
+    public function __construct(
+        public string $employeeId,
+        public ?string $date = null,
+    ) {
     }
 }

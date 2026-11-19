@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Shared\Infrastructure\Api\Json;
 
 use App\Shared\Functional\Either;
-use App\Shared\Functional\Task;
+use App\Shared\Functional\TaskEither;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -39,17 +39,45 @@ trait JsonApiTrait
     }
 
     /**
+     * Parses the request body and hydrates a class from it.
+     *
+     * @template T of object
+     *
+     * @param class-string<T> $class
+     * @param array<string, string> $map JSON key => constructor parameter name
+     *
+     * @return Either<string, T>
+     */
+    private function parseJsonPayloadAs(Request $request, string $class, array $map): Either
+    {
+        return $this->parseJsonPayload($request)->flatMap(static function (array $payload) use ($class, $map): Either {
+            $arguments = [];
+
+            foreach (array_intersect_key($map, $payload) as $jsonKey => $parameter) {
+                $arguments[$parameter] = $payload[$jsonKey];
+            }
+
+            try {
+                return Either::Right((new \ReflectionClass($class))->newInstanceArgs($arguments));
+            } catch (\ArgumentCountError) {
+                return Either::Left('Missing required fields.');
+            } catch (\TypeError) {
+                return Either::Left('Invalid field type.');
+            }
+        });
+    }
+
+    /**
      * Unwraps a task of an either into a JsonResponse: Right maps to 201 Created,
      * Left maps to 400 Bad Request unless an explicit onLeft hook is provided.
      *
-     * @param Task<Either<ToJson, ToJson>> $task
-     * @param callable(ToJson): JsonResponse|null $onLeft
+     * @param TaskEither<ToJson, ToJson> $task
      */
-    private function taskToJsonResponse(Task $task, ?callable $onLeft = null): JsonResponse
+    private function taskToJsonResponse(TaskEither $task): JsonResponse
     {
-        return $task->run()->fold(
-            onLeft: $onLeft ?? static fn (ToJson $left): JsonResponse => new JsonResponse($left->toJson(), Response::HTTP_BAD_REQUEST),
-            onRight: static fn (ToJson $right): JsonResponse => new JsonResponse($right->toJson(), Response::HTTP_CREATED),
-        );
+        return $task->fold(
+            onLeft: $onLeft ?? static fn(ToJson $left): JsonResponse => new JsonResponse($left->toJson(), Response::HTTP_BAD_REQUEST),
+            onRight: static fn(ToJson $right): JsonResponse => new JsonResponse($right->toJson(), Response::HTTP_CREATED),
+        )->run();
     }
 }
