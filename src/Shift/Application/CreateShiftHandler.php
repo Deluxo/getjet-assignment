@@ -26,7 +26,7 @@ final class CreateShiftHandler implements CreateShift
                 return Either::Left(new ShiftErrors($errors));
             }
 
-            return Either::Left(new ShiftErrors([new NotImplementedError()]));
+            return Either::Left(new ShiftErrors([new Error('not_implemented', 'Not implemented.')]));
         });
     }
 
@@ -38,23 +38,23 @@ final class CreateShiftHandler implements CreateShift
         $errors = [];
 
         if ($request->employeeId === '') {
-            $errors[] = new FieldError('employee_id', 'must not be empty.');
+            $errors[] = Error::forField('employee_id', 'must not be empty.');
         }
 
         if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $request->date)) {
-            $errors[] = new FieldError('date', 'must be in YYYY-MM-DD format.');
+            $errors[] = Error::forField('date', 'must be in YYYY-MM-DD format.');
         }
 
         if (!preg_match('/^\d{2}:\d{2}$/', $request->startTime)) {
-            $errors[] = new FieldError('start_time', 'must be in HH:mm format.');
+            $errors[] = Error::forField('start_time', 'must be in HH:mm format.');
         }
 
         if (!preg_match('/^\d{2}:\d{2}$/', $request->endTime)) {
-            $errors[] = new FieldError('end_time', 'must be in HH:mm format.');
+            $errors[] = Error::forField('end_time', 'must be in HH:mm format.');
         }
 
         if ($request->countryCode !== '' && $request->countryCode !== 'LT') {
-            $errors[] = new FieldError('country_code', sprintf('"%s" is not supported.', $request->countryCode));
+            $errors[] = Error::forField('country_code', sprintf('"%s" is not supported.', $request->countryCode));
         }
 
         return $errors;
