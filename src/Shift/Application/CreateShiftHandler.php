@@ -6,20 +6,25 @@ namespace App\Shift\Application;
 
 use App\Shared\Error;
 use App\Shared\Functional\TaskEither;
+use App\Shared\Validation\Validator;
+use App\Shift\Application\Rule\HolidayRule;
 use App\Shift\Domain\Port\In\CreateShift;
 use App\Shift\Domain\Port\In\CreateShiftRequest;
-use App\Shift\Domain\Port\Out\CreatedShift;
 
 final class CreateShiftHandler implements CreateShift
 {
+    public function __construct(
+        private readonly HolidayRule $holidayRule,
+    ) {}
+
     /**
-     * @return TaskEither<list<Error>, CreatedShift>
+     * @return TaskEither<list<Error>, CreateShiftRequest>
      */
     public function invoke(CreateShiftRequest $request): TaskEither
     {
-
-        var_dump('labas');
-
-        return TaskEither::of(1);
+        return TaskEither::right($request)
+            ->flatMap(fn(CreateShiftRequest $request): TaskEither => Validator::loadRules(
+                $this->holidayRule,
+            )->validate($request));
     }
 }

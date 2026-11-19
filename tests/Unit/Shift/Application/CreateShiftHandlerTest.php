@@ -5,35 +5,85 @@ declare(strict_types=1);
 namespace App\Tests\Unit\Shift\Application;
 
 use App\Shared\Error;
+use App\Shared\Functional\Either;
 use App\Shift\Application\CreateShiftHandler;
+use App\Shift\Application\Rule\HolidayRule;
 use App\Shift\Domain\Port\In\CreateShiftRequest;
+use App\Tests\Unit\Shift\Application\Support\FakeHolidayCalendar;
 use PHPUnit\Framework\TestCase;
 
 final class CreateShiftHandlerTest extends TestCase
 {
-    public function testValidateReturnsFieldErrorsForInvalidFields(): void
+    public function testRejectsTheShiftWhenTheDateIsAPublicHoliday(): void
     {
-        $request = new CreateShiftRequest(
-            employeeId: '',
-            date: '06-10-2026',
-            startTime: '9:00',
+        $handler = new CreateShiftHandler(new HolidayRule(new FakeHolidayCalendar(true)));
+
+        $result = $handler->invoke(self::request())->run();
+
+        self::assertEquals(
+            [Error::forField('date', 'is a public holiday.')],
+            self::left($result),
+        );
+    }
+
+    public function testReturnsTheValidatedRequestWhenTheDateIsNotAHoliday(): void
+    {
+        $request = self::request();
+        $handler = new CreateShiftHandler(new HolidayRule(new FakeHolidayCalendar(false)));
+
+        $result = $handler->invoke($request)->run();
+
+        self::assertSame($request, self::right($result));
+    }
+
+    public function testPassesCalendarErrorsThroughAsAList(): void
+    {
+        $error = new Error('holiday_calendar', 'The public holiday calendar is unavailable.');
+        $handler = new CreateShiftHandler(new HolidayRule(new FakeHolidayCalendar($error)));
+
+        $result = $handler->invoke(self::request())->run();
+
+        self::assertSame([$error], self::left($result));
+    }
+
+    private static function request(): CreateShiftRequest
+    {
+        return new CreateShiftRequest(
+            employeeId: 'employee-123',
+            date: '2026-10-06',
+            startTime: '09:00',
             endTime: '17:00',
-            countryCode: 'DE',
+            countryCode: 'LT',
         );
+    }
 
-        $result = (new CreateShiftHandler())->invoke($request)->run();
-
-        self::assertTrue($result->isLeft());
-
-        /** @var list<Error> $errors */
-        $errors = $result->fold(
-            onLeft: static fn (array $value): array => $value,
-            onRight: static fn (): never => throw new \LogicException('Expected a left value.'),
+    /**
+     * @template T
+     *
+     * @param Either<list<Error>, T> $either
+     *
+     * @return list<Error>
+     */
+    private static function left(Either $either): mixed
+    {
+        return $either->fold(
+            static fn (mixed $errors): mixed => $errors,
+            static fn (): never => throw new \LogicException('Expected a left value.'),
         );
+    }
 
-        self::assertSame(
-            ['employee_id', 'date', 'start_time', 'country_code'],
-            array_map(static fn (Error $error): string => $error->code(), $errors),
+    /**
+     * @template T
+     *
+     * @param Either<list<Error>, T> $either
+     *
+     * @return T
+     */
+    private static function right(Either $either): mixed
+    {
+        return $either->fold(
+            static fn (): never => throw new \LogicException('Expected a right value.'),
+            static fn (mixed $value): mixed => $value,
         );
     }
 }
