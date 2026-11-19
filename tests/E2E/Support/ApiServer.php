@@ -15,6 +15,9 @@ final class ApiServer
     /** @var resource|null */
     private $process;
 
+    /** @var array<int, resource> */
+    private array $pipes = [];
+
     private int $port;
 
     private string $baseUrl = '';
@@ -40,20 +43,47 @@ final class ApiServer
 
         $command = [PHP_BINARY, '-S', sprintf('127.0.0.1:%d', $this->port), '-t', $this->projectDir . '/public'];
 
-        $logFile = fopen($this->logPath, 'ab');
-
         $this->process = proc_open($command, [
             0 => ['pipe', 'r'],
-            1 => $logFile,
-            2 => $logFile,
+            1 => ['pipe', 'w'],
+            2 => ['pipe', 'w'],
         ], $pipes, $this->projectDir, $this->environment());
 
         if ($this->process === false) {
             throw new RuntimeException('Failed to start the API server process.');
         }
 
+        $this->pipes = $pipes;
+        stream_set_blocking($this->pipes[1], false);
+        stream_set_blocking($this->pipes[2], false);
+
         $this->waitUntilReady();
         $this->registerShutdownHook();
+    }
+
+    /**
+     * Forwards everything the server wrote since the last drain to the test's
+     * stderr and appends it to the log file.
+     *
+     * Only stderr is captured: php -S sends script output (var_dump/echo) to the
+     * HTTP response, so use error_log() or the logger for debugging.
+     */
+    public function drain(): void
+    {
+        foreach ($this->pipes as $fd => $pipe) {
+            if ($fd === 0 || !\is_resource($pipe)) {
+                continue;
+            }
+
+            $chunk = stream_get_contents($pipe);
+
+            if ($chunk === false || $chunk === '') {
+                continue;
+            }
+
+            file_put_contents($this->logPath, $chunk, FILE_APPEND);
+            fwrite(STDERR, $chunk);
+        }
     }
 
     public function stop(): void
@@ -62,6 +92,7 @@ final class ApiServer
             return;
         }
 
+        $this->drain();
         proc_terminate($this->process);
 
         for ($i = 0; $i < 50; $i++) {
@@ -74,8 +105,10 @@ final class ApiServer
             usleep(100_000);
         }
 
+        $this->drain();
         proc_close($this->process);
         $this->process = null;
+        $this->pipes = [];
     }
 
     public function baseUrl(): string
@@ -88,6 +121,8 @@ final class ApiServer
      */
     public function logTail(int $lines = 30): string
     {
+        $this->drain();
+
         if (!is_file($this->logPath)) {
             return '(no server log available)';
         }

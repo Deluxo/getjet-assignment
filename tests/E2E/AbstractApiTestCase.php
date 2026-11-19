@@ -54,6 +54,11 @@ abstract class AbstractApiTestCase extends TestCase
         $this->client = new ApiClient(self::$baseUrl);
     }
 
+    protected function tearDown(): void
+    {
+        self::$server?->drain();
+    }
+
     protected function client(): ApiClient
     {
         return $this->client;
