@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Tests\Unit\Shared\Infrastructure\Api\Json;
 
+use App\Shared\Error;
 use App\Shared\Functional\Either;
 use App\Shared\Functional\TaskEither;
 use App\Shared\Infrastructure\Api\Json\JsonApiTrait;
@@ -69,21 +70,41 @@ final class JsonApiTraitTest extends TestCase
 
     public function testUnwrapReturnsBadRequestForLeftByDefault(): void
     {
-        $task = TaskEither::left(new LeftValue());
+        /** @var list<Error> $errors */
+        $errors = [new Error('boom', 'Boom.')];
+        $task = TaskEither::left($errors);
 
         $response = $this->host->unwrap($task);
 
         self::assertSame(Response::HTTP_BAD_REQUEST, $response->getStatusCode());
-        self::assertSame(['errors' => ['boom']], json_decode((string) $response->getContent(), true));
+        self::assertSame(
+            ['errors' => [['code' => 'boom', 'message' => 'Boom.']]],
+            json_decode((string) $response->getContent(), true),
+        );
+    }
+
+    public function testUnwrapEncodesStringLeftAsInvalidRequest(): void
+    {
+        $task = TaskEither::left('Invalid JSON.');
+
+        $response = $this->host->unwrap($task);
+
+        self::assertSame(Response::HTTP_BAD_REQUEST, $response->getStatusCode());
+        self::assertSame(
+            ['errors' => [['code' => 'invalid_request', 'message' => 'Invalid JSON.']]],
+            json_decode((string) $response->getContent(), true),
+        );
     }
 
     public function testUnwrapDelegatesLeftToProvidedHook(): void
     {
-        $task = TaskEither::left(new LeftValue());
+        /** @var list<Error> $errors */
+        $errors = [new Error('boom', 'Boom.')];
+        $task = TaskEither::left($errors);
 
         $response = $this->host->unwrap(
             $task,
-            static fn(ToJson $left): JsonResponse => new JsonResponse(['hook' => true], Response::HTTP_NOT_IMPLEMENTED),
+            static fn(string|array $left): JsonResponse => new JsonResponse(['hook' => true], Response::HTTP_NOT_IMPLEMENTED),
         );
 
         self::assertSame(Response::HTTP_NOT_IMPLEMENTED, $response->getStatusCode());
@@ -204,8 +225,8 @@ final class JsonApiTraitHost
     }
 
     /**
-     * @param TaskEither<ToJson, ToJson> $task
-     * @param callable(ToJson): JsonResponse|null $onLeft
+     * @param TaskEither<string|list<Error>, ToJson> $task
+     * @param (callable(string|list<Error>): JsonResponse)|null $onLeft
      */
     public function unwrap(TaskEither $task, ?callable $onLeft = null): JsonResponse
     {
@@ -221,17 +242,6 @@ final class RightValue implements ToJson
     public function toJson(): array
     {
         return ['id' => 'shift-1'];
-    }
-}
-
-final class LeftValue implements ToJson
-{
-    /**
-     * @return array<string, mixed>
-     */
-    public function toJson(): array
-    {
-        return ['errors' => ['boom']];
     }
 }
 

@@ -10,24 +10,25 @@ use App\Shared\Functional\TaskEither;
 use App\Shift\Domain\Port\In\CreateShift;
 use App\Shift\Domain\Port\In\CreateShiftRequest;
 use App\Shift\Domain\Port\Out\CreatedShift;
-use App\Shift\Domain\Port\Out\ShiftErrors;
 
 final class CreateShiftHandler implements CreateShift
 {
     /**
-     * @return TaskEither<ShiftErrors, CreatedShift>
+     * @return TaskEither<list<Error>, CreatedShift>
      */
     public function invoke(CreateShiftRequest $request): TaskEither
     {
-        return TaskEither::defer(static function () use ($request): Either {
-            $errors = self::validate($request);
+        return TaskEither::defer(static fn (): Either => Either::Left(self::errors($request)));
+    }
 
-            if ($errors !== []) {
-                return Either::Left(new ShiftErrors($errors));
-            }
+    /**
+     * @return list<Error>
+     */
+    private static function errors(CreateShiftRequest $request): array
+    {
+        $errors = self::validate($request);
 
-            return Either::Left(new ShiftErrors([new Error('not_implemented', 'Not implemented.')]));
-        });
+        return $errors !== [] ? $errors : [new Error('not_implemented', 'Not implemented.')];
     }
 
     /**

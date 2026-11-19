@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Shared\Infrastructure\Api\Json;
 
+use App\Shared\Error;
 use App\Shared\Functional\Either;
 use App\Shared\Functional\TaskEither;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -71,13 +72,35 @@ trait JsonApiTrait
      * Unwraps a task of an either into a JsonResponse: Right maps to 201 Created,
      * Left maps to 400 Bad Request unless an explicit onLeft hook is provided.
      *
-     * @param TaskEither<ToJson, ToJson> $task
+     * @template T of ToJson
+     *
+     * @param TaskEither<string|list<Error>, T> $task
+     * @param (callable(string|list<Error>): JsonResponse)|null $onLeft
      */
-    private function taskToJsonResponse(TaskEither $task): JsonResponse
+    private function taskToJsonResponse(TaskEither $task, ?callable $onLeft = null): JsonResponse
     {
         return $task->fold(
-            onLeft: $onLeft ?? static fn(ToJson $left): JsonResponse => new JsonResponse($left->toJson(), Response::HTTP_BAD_REQUEST),
+            onLeft: $onLeft ?? $this->errorResponse(...),
             onRight: static fn(ToJson $right): JsonResponse => new JsonResponse($right->toJson(), Response::HTTP_CREATED),
         )->run();
+    }
+
+    /**
+     * Encodes a failure as `{"errors": [{"code": …, "message": …}]}`. A plain
+     * string is a transport-level parse failure and gets the `invalid_request`
+     * code, since it never reaches an input port.
+     *
+     * @param string|list<Error> $left
+     */
+    private function errorResponse(string|array $left): JsonResponse
+    {
+        $errors = \is_string($left) ? [new Error('invalid_request', $left)] : $left;
+
+        return new JsonResponse([
+            'errors' => array_map(
+                static fn(Error $error): array => ['code' => $error->code(), 'message' => $error->message()],
+                $errors,
+            ),
+        ], Response::HTTP_BAD_REQUEST);
     }
 }

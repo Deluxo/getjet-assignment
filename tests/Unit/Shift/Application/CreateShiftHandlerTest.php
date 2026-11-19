@@ -4,10 +4,9 @@ declare(strict_types=1);
 
 namespace App\Tests\Unit\Shift\Application;
 
-use App\Shared\Functional\Either;
+use App\Shared\Error;
 use App\Shift\Application\CreateShiftHandler;
 use App\Shift\Domain\Port\In\CreateShiftRequest;
-use App\Shift\Domain\Port\Out\ShiftErrors;
 use PHPUnit\Framework\TestCase;
 
 final class CreateShiftHandlerTest extends TestCase
@@ -26,15 +25,15 @@ final class CreateShiftHandlerTest extends TestCase
 
         self::assertTrue($result->isLeft());
 
-        /** @var ShiftErrors $errors */
+        /** @var list<Error> $errors */
         $errors = $result->fold(
-            onLeft: static fn (ShiftErrors $value): ShiftErrors => $value,
+            onLeft: static fn (array $value): array => $value,
             onRight: static fn (): never => throw new \LogicException('Expected a left value.'),
         );
 
         self::assertSame(
             ['employee_id', 'date', 'start_time', 'country_code'],
-            array_map(static fn ($error) => $error->code(), $errors->errors()),
+            array_map(static fn (Error $error): string => $error->code(), $errors),
         );
     }
 }
