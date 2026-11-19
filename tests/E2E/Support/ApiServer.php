@@ -152,6 +152,8 @@ final class ApiServer
 
     /**
      * Tail of the server log, useful for failure messages when a request 5xx'd.
+     * php -S's own request log is filtered out; the full stream stays in the
+     * log file.
      */
     public function logTail(int $lines = 30): string
     {
@@ -162,6 +164,14 @@ final class ApiServer
         }
 
         $all = file($this->logPath, FILE_IGNORE_NEW_LINES) ?: [];
+        $all = array_values(array_filter(
+            $all,
+            fn (string $line): bool => $line !== '' && !$this->isServerNoise($line),
+        ));
+
+        if ($all === []) {
+            return '(no server errors logged)';
+        }
 
         return implode("\n", array_slice($all, -$lines));
     }
