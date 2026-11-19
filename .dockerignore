@@ -1,0 +1,9 @@
+.git
+.gitignore
+vendor
+var
+.phpunit.cache
+.env.local
+.env.*.local
+AGENTS.md
+plan.md
