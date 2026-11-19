@@ -18,6 +18,8 @@ final class ApiServer
     /** @var array<int, resource> */
     private array $pipes = [];
 
+    private string $outputBuffer = '';
+
     private int $port;
 
     private string $baseUrl = '';
@@ -66,7 +68,9 @@ final class ApiServer
      * stderr and appends it to the log file.
      *
      * Only stderr is captured: php -S sends script output (var_dump/echo) to the
-     * HTTP response, so use error_log() or the logger for debugging.
+     * HTTP response, so use error_log() or the logger for debugging. The
+     * built-in server's own request log is filtered out to keep test output
+     * readable; the unfiltered stream is still written to the log file.
      */
     public function drain(): void
     {
@@ -82,8 +86,37 @@ final class ApiServer
             }
 
             file_put_contents($this->logPath, $chunk, FILE_APPEND);
-            fwrite(STDERR, $chunk);
+            $this->outputBuffer .= $chunk;
         }
+
+        $this->emitLines(false);
+    }
+
+    /**
+     * Emits complete lines buffered from the server, dropping php -S's own
+     * request log. A trailing partial line is kept unless $flushPartial is set.
+     */
+    private function emitLines(bool $flushPartial): void
+    {
+        $lines = explode("\n", $this->outputBuffer);
+
+        $this->outputBuffer = $flushPartial ? '' : (string) array_pop($lines);
+
+        foreach ($lines as $line) {
+            if ($line === '' || $this->isServerNoise($line)) {
+                continue;
+            }
+
+            fwrite(STDERR, $line . "\n");
+        }
+    }
+
+    private function isServerNoise(string $line): bool
+    {
+        return 1 === preg_match(
+            '/^\[[^\]]+\] (?:127\.0\.0\.1:\d+ |PHP [\d.]+ Development Server )/',
+            $line,
+        );
     }
 
     public function stop(): void
@@ -106,6 +139,7 @@ final class ApiServer
         }
 
         $this->drain();
+        $this->emitLines(true);
         proc_close($this->process);
         $this->process = null;
         $this->pipes = [];
