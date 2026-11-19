@@ -68,12 +68,12 @@ final readonly class Left extends Either
     /**
      * @template U
      *
-     * @param callable(never):U $onRight
      * @param callable(E):U $onLeft
+     * @param callable(never):U $onRight
      *
      * @return U
      */
-    public function fold(callable $onRight, callable $onLeft): mixed
+    public function fold(callable $onLeft, callable $onRight): mixed
     {
         return $onLeft($this->error);
     }

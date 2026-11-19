@@ -51,8 +51,8 @@ final class JsonApiTraitTest extends TestCase
         self::assertSame(
             ['employee_id' => 'employee-123'],
             $result->fold(
-                onRight: static fn (array $payload): array => $payload,
                 onLeft: static fn (): array => [],
+                onRight: static fn (array $payload): array => $payload,
             ),
         );
     }
@@ -96,8 +96,8 @@ final class JsonApiTraitTest extends TestCase
     private function leftValue(Either $result): string
     {
         return $result->fold(
-            onRight: static fn (): string => '',
             onLeft: static fn (string $message): string => $message,
+            onRight: static fn (): string => '',
         );
     }
 

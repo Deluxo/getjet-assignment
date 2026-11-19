@@ -48,8 +48,8 @@ trait JsonApiTrait
     private function taskToJsonResponse(Task $task, ?callable $onLeft = null): JsonResponse
     {
         return $task->run()->fold(
-            onRight: static fn (ToJson $right): JsonResponse => new JsonResponse($right->toJson(), Response::HTTP_CREATED),
             onLeft: $onLeft ?? static fn (ToJson $left): JsonResponse => new JsonResponse($left->toJson(), Response::HTTP_BAD_REQUEST),
+            onRight: static fn (ToJson $right): JsonResponse => new JsonResponse($right->toJson(), Response::HTTP_CREATED),
         );
     }
 }

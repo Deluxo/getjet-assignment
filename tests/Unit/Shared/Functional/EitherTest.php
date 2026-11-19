@@ -33,8 +33,8 @@ final class EitherTest extends TestCase
     public function testMapTransformsRight(): void
     {
         self::assertSame(84, Either::Right(42)->map(static fn (int $value): int => $value * 2)->fold(
-            static fn (int $value): int => $value,
             static fn (array $errors): int => -1,
+            static fn (int $value): int => $value,
         ));
     }
 
@@ -72,7 +72,7 @@ final class EitherTest extends TestCase
         self::assertFalse($called);
         self::assertSame(
             ['first'],
-            $either->fold(static fn (): array => [], static fn (array $errors): array => $errors),
+            $either->fold(static fn (array $errors): array => $errors, static fn (): array => []),
         );
     }
 
@@ -81,16 +81,16 @@ final class EitherTest extends TestCase
         self::assertSame(
             'right:1',
             Either::Right(1)->fold(
-                static fn (int $value): string => 'right:'.$value,
                 static fn (array $errors): string => 'left',
+                static fn (int $value): string => 'right:'.$value,
             ),
         );
 
         self::assertSame(
             'left:2',
             Either::Left(['a', 'b'])->fold(
-                static fn (): string => 'right',
                 static fn (array $errors): string => 'left:'.count($errors),
+                static fn (): string => 'right',
             ),
         );
     }

@@ -64,10 +64,10 @@ abstract readonly class Either implements Monad
     /**
      * @template U
      *
-     * @param callable(T):U $onRight
      * @param callable(E):U $onLeft
+     * @param callable(T):U $onRight
      *
      * @return U
      */
-    abstract public function fold(callable $onRight, callable $onLeft): mixed;
+    abstract public function fold(callable $onLeft, callable $onRight): mixed;
 }
