@@ -113,6 +113,23 @@ final class TaskEither implements Monad
 
     /**
      * @template EF
+     *
+     * @param callable(E): EF $transform
+     *
+     * @return self<EF, T>
+     */
+    public function mapLeft(callable $transform): self
+    {
+        return new self(function () use ($transform): Either {
+            return $this->run()->fold(
+                static fn (mixed $error): Either => Either::Left($transform($error)),
+                static fn (mixed $value): Either => Either::Right($value),
+            );
+        });
+    }
+
+    /**
+     * @template EF
      * @template U
      *
      * @param callable(T): self<EF, U> $transform

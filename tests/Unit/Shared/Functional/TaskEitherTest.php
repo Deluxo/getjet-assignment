@@ -104,6 +104,34 @@ final class TaskEitherTest extends TestCase
         self::assertTrue($taskEither->run()->isLeft());
     }
 
+    public function testMapLeftTransformsLeftOnly(): void
+    {
+        self::assertSame(
+            'BOOM',
+            TaskEither::left('boom')
+                ->mapLeft(static fn (string $error): string => strtoupper($error))
+                ->run()
+                ->fold(static fn (string $error): string => $error, static fn (): string => 'right'),
+        );
+
+        self::assertTrue(
+            TaskEither::right(1)
+                ->mapLeft(static fn (string $error): string => strtoupper($error))
+                ->run()
+                ->isRight(),
+        );
+    }
+
+    public function testMapLeftIsLazyAndSkippedOnRight(): void
+    {
+        $transform = new CountingTransformer();
+        $taskEither = TaskEither::right(1)->mapLeft($transform);
+
+        self::assertSame(0, $transform->calls);
+        self::assertTrue($taskEither->run()->isRight());
+        self::assertSame(0, $transform->calls);
+    }
+
     public function testFlatMapSequencesTaskEithers(): void
     {
         $order = [];
@@ -239,5 +267,17 @@ final class TaskEitherTest extends TestCase
         $this->expectException(\LogicException::class);
 
         $base->run();
+    }
+}
+
+final class CountingTransformer
+{
+    public int $calls = 0;
+
+    public function __invoke(string $error): string
+    {
+        ++$this->calls;
+
+        return $error;
     }
 }
