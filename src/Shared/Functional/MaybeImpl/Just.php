@@ -70,12 +70,12 @@ final readonly class Just extends Maybe
     }
 
     /**
-     * @param callable $onJust
      * @param callable $onNothing
+     * @param callable $onJust
      *
      * @return mixed
      */
-    public function fold(callable $onJust, callable $onNothing): mixed
+    public function fold(callable $onNothing, callable $onJust): mixed
     {
         return $onJust($this->value);
     }

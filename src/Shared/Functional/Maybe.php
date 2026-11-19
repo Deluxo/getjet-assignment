@@ -50,12 +50,12 @@ abstract readonly class Maybe implements Monad
     }
 
     /**
-     * @param callable $onJust
      * @param callable $onNothing
+     * @param callable $onJust
      *
      * @return mixed
      */
-    abstract public function fold(callable $onJust, callable $onNothing): mixed;
+    abstract public function fold(callable $onNothing, callable $onJust): mixed;
 
     /**
      * @param mixed $default
@@ -65,8 +65,8 @@ abstract readonly class Maybe implements Monad
     public function getOrElse(mixed $default): mixed
     {
         return $this->fold(
-            static fn(mixed $value): mixed => $value,
             static fn(): mixed => $default,
+            static fn(mixed $value): mixed => $value,
         );
     }
 
