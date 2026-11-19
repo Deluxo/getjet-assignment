@@ -34,9 +34,11 @@ final readonly class Just extends Maybe
     }
 
     /**
-     * @param callable $transform
+     * @template U
      *
-     * @return Just<mixed>
+     * @param callable(T):U $transform
+     *
+     * @return Just<U>
      */
     public function map(callable $transform): self
     {
@@ -44,7 +46,7 @@ final readonly class Just extends Maybe
     }
 
     /**
-     * @param callable $transform
+     * @param callable(T): mixed $transform
      *
      * @return Maybe<mixed>
      */
@@ -54,7 +56,7 @@ final readonly class Just extends Maybe
     }
 
     /**
-     * @param Applicative $wrappedFn
+     * @param Applicative<mixed> $wrappedFn
      *
      * @return mixed
      */

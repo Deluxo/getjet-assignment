@@ -11,6 +11,8 @@ use App\Shared\Functional\MaybeImpl\Nothing;
 /**
  * A value that is either present (Just) or absent (Nothing).
  *
+ * @implements Monad<T>
+ *
  * @template T
  */
 abstract readonly class Maybe implements Monad
@@ -73,5 +75,10 @@ abstract readonly class Maybe implements Monad
     public function isNothing(): bool
     {
         return !$this->isJust();
+    }
+
+    public function nullish(mixed $value): self
+    {
+        return $value ? self::just($value) : self::nothing();
     }
 }

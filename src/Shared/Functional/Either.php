@@ -11,6 +11,9 @@ use App\Shared\Functional\Laws\Monad;
 /**
  * A value that is either a success (Right) or a failure (Left).
  *
+ * @implements Monad<T>
+ *
+ * @template E
  * @template T
  */
 abstract readonly class Either implements Monad
@@ -40,11 +43,11 @@ abstract readonly class Either implements Monad
     }
 
     /**
-     * @template E
+     * @template EL
      *
-     * @param E $error
+     * @param EL $error
      *
-     * @return Left<E>
+     * @return Left<EL>
      */
     public static function Left(mixed $error): self
     {
@@ -59,23 +62,12 @@ abstract readonly class Either implements Monad
     }
 
     /**
-     * @param callable $onRight
-     * @param callable $onLeft
+     * @template U
      *
-     * @return mixed
+     * @param callable(T):U $onRight
+     * @param callable(E):U $onLeft
+     *
+     * @return U
      */
     abstract public function fold(callable $onRight, callable $onLeft): mixed;
-
-    /**
-     * @param callable $transform
-     *
-     * @return static
-     */
-    public function mapError(callable $transform): self
-    {
-        return $this->fold(
-            static fn (mixed $value): self => new Right($value),
-            static fn (mixed $error): self => new Left($transform($error)),
-        );
-    }
 }

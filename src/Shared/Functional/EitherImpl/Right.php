@@ -8,6 +8,8 @@ use App\Shared\Functional\Either;
 use App\Shared\Functional\Laws\Applicative;
 
 /**
+ * @extends Either<never, T>
+ *
  * @template T
  */
 final readonly class Right extends Either
@@ -34,9 +36,11 @@ final readonly class Right extends Either
     }
 
     /**
-     * @param callable $transform
+     * @template U
      *
-     * @return Right<mixed>
+     * @param callable(T):U $transform
+     *
+     * @return Right<U>
      */
     public function map(callable $transform): self
     {
@@ -44,9 +48,9 @@ final readonly class Right extends Either
     }
 
     /**
-     * @param callable $transform
+     * @param callable(T): mixed $transform
      *
-     * @return Either<mixed>
+     * @return Either<mixed, mixed>
      */
     public function flatMap(callable $transform): Either
     {
@@ -54,7 +58,7 @@ final readonly class Right extends Either
     }
 
     /**
-     * @param Applicative $wrappedFn
+     * @param Applicative<mixed> $wrappedFn
      *
      * @return mixed
      */
@@ -68,10 +72,12 @@ final readonly class Right extends Either
     }
 
     /**
-     * @param callable $onRight
-     * @param callable $onLeft
+     * @template U
      *
-     * @return mixed
+     * @param callable(T):U $onRight
+     * @param callable(never):U $onLeft
+     *
+     * @return U
      */
     public function fold(callable $onRight, callable $onLeft): mixed
     {

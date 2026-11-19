@@ -10,6 +10,8 @@ use App\Shared\Functional\Laws\Functor;
  * A lazy computation. Nothing inside the thunk runs until {@see self::run()} is called,
  * and a task (or any task derived from it) can only be executed once.
  *
+ * @implements Functor<T>
+ *
  * @template T
  */
 final class Task implements Functor

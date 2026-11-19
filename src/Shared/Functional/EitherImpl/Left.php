@@ -8,6 +8,8 @@ use App\Shared\Functional\Either;
 use App\Shared\Functional\Laws\Applicative;
 
 /**
+ * @extends Either<E, never>
+ *
  * @template E
  */
 final readonly class Left extends Either
@@ -54,7 +56,7 @@ final readonly class Left extends Either
     }
 
     /**
-     * @param Applicative $wrappedFn
+     * @param Applicative<mixed> $wrappedFn
      *
      * @return Left<E>
      */
@@ -64,10 +66,12 @@ final readonly class Left extends Either
     }
 
     /**
-     * @param callable $onRight
-     * @param callable $onLeft
+     * @template U
      *
-     * @return mixed
+     * @param callable(never):U $onRight
+     * @param callable(E):U $onLeft
+     *
+     * @return U
      */
     public function fold(callable $onRight, callable $onLeft): mixed
     {

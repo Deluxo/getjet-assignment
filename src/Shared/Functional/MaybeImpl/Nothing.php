@@ -46,7 +46,7 @@ final readonly class Nothing extends Maybe
     }
 
     /**
-     * @param Applicative $wrappedFn
+     * @param Applicative<mixed> $wrappedFn
      *
      * @return Nothing<never>
      */

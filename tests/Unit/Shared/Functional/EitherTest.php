@@ -52,31 +52,6 @@ final class EitherTest extends TestCase
         self::assertTrue($either->isLeft());
     }
 
-    public function testMapErrorTransformsFailure(): void
-    {
-        self::assertSame(
-            ['wrapped'],
-            Either::Left(['error'])->mapError(static fn (array $errors): array => ['wrapped'])->fold(
-                static fn (): array => [],
-                static fn (array $errors): array => $errors,
-            ),
-        );
-    }
-
-    public function testMapErrorDoesNotRunOnSuccess(): void
-    {
-        $called = false;
-
-        $either = Either::Right(1)->mapError(static function (array $errors) use (&$called): array {
-            $called = true;
-
-            return $errors;
-        });
-
-        self::assertTrue($either->isRight());
-        self::assertFalse($called);
-    }
-
     public function testFlatMapChainsOnSuccess(): void
     {
         $either = Either::Right(2)->flatMap(static fn (int $value): Either => Either::Right($value * 5));
