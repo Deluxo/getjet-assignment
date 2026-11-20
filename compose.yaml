@@ -6,3 +6,8 @@ services:
     environment:
       APP_ENV: dev
       APP_DEBUG: "1"
+    volumes:
+      - shift-data:/app/var
+
+volumes:
+  shift-data:

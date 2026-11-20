@@ -19,8 +19,10 @@ RUN composer install --no-scripts --no-interaction --no-progress --prefer-dist
 COPY . .
 
 RUN composer dump-autoload --optimize --no-interaction \
+    && chmod +x docker/entrypoint.sh \
     && mkdir -p var/cache var/log
 
 EXPOSE 8000
 
+ENTRYPOINT ["docker/entrypoint.sh"]
 CMD ["php", "-S", "0.0.0.0:8000", "-t", "public"]
