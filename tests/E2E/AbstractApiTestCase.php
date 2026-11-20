@@ -77,6 +77,36 @@ abstract class AbstractApiTestCase extends TestCase
         return $this->client->postJson($path, $payload);
     }
 
+    protected function postRaw(string $path, string $body, string $contentType = 'application/json'): HttpResponse
+    {
+        return $this->client->request('POST', $path, ['Content-Type' => $contentType], $body);
+    }
+
+    /**
+     * Asserts the status and the first error code of a rejected request.
+     */
+    protected function assertErrorCode(HttpResponse $response, int $status, string $code): void
+    {
+        $body = $this->assertRejected($response, $status, allowServerError: $status >= 500);
+        $errors = $body['errors'] ?? null;
+
+        if (!is_array($errors) || !is_array($errors[0] ?? null)) {
+            self::fail('The error body should contain an "errors" array.');
+        }
+
+        self::assertSame($code, $errors[0]['code'] ?? null);
+    }
+
+    /**
+     * Contents of the NDJSON delivery log written by the notification module.
+     */
+    protected function sentNotificationLines(): string
+    {
+        $contents = @file_get_contents(self::projectDir().'/var/notifications/sent.ndjson');
+
+        return false === $contents ? '' : $contents;
+    }
+
     /**
      * A unique id so repeated runs (and your inotify loop) never collide.
      */
@@ -105,11 +135,17 @@ abstract class AbstractApiTestCase extends TestCase
     /**
      * Assert an error response with a non-empty "errors" array and return the decoded body.
      *
+     * @param bool $allowServerError keep the 5xx log hint quiet for expected
+     *                               upstream failures such as a 503
+     *
      * @return array<string, mixed>
      */
-    protected function assertRejected(HttpResponse $response, int $status = 400): array
+    protected function assertRejected(HttpResponse $response, int $status = 400, bool $allowServerError = false): array
     {
-        $this->assertNoServerError($response);
+        if (!$allowServerError) {
+            $this->assertNoServerError($response);
+        }
+
         self::assertSame($status, $response->status, sprintf('Expected a %d response.', $status));
 
         $body = $response->json();
