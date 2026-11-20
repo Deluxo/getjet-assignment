@@ -15,9 +15,7 @@ use App\Shift\Domain\Port\Out\HolidayCalendar;
  */
 final readonly class HolidayRule implements ValidationRule
 {
-    public function __construct(private HolidayCalendar $holidays)
-    {
-    }
+    public function __construct(private HolidayCalendar $holidays) {}
 
     /**
      * @param CreateShiftRequest $subject
@@ -33,7 +31,7 @@ final readonly class HolidayRule implements ValidationRule
         }
 
         return $this->holidays->isPublicHoliday($subject->countryCode, $date)
-            ->flatMap(static fn (bool $isHoliday): TaskEither => $isHoliday
+            ->flatMap(static fn(bool $isHoliday): TaskEither => $isHoliday
                 ? TaskEither::left(Error::forField('date', 'is a public holiday.'))
                 : TaskEither::right($subject));
     }
