@@ -19,3 +19,4 @@ services:
 
     App\Shift\Domain\Port\In\CreateShift: '@App\Shift\Application\CreateShiftHandler'
     App\Shift\Domain\Port\Out\HolidayCalendar: '@App\Shift\Infrastructure\HolidayCalendar\NagerApi'
+    App\Shift\Domain\Port\Out\ShiftRepository: '@App\Shift\Infrastructure\Persistence\Doctrine\DoctrineShiftRepository'

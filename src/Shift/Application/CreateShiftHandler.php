@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Shift\Application;
 
-use App\Shared\Debug;
 use App\Shared\Error;
 use App\Shared\Functional\TaskEither;
 use App\Shared\Validation\Validator;
@@ -15,6 +14,8 @@ use App\Shift\Application\Rule\ShiftLengthRule;
 use App\Shift\Application\Rule\ShiftWithinSameDayRule;
 use App\Shift\Domain\Port\In\CreateShift;
 use App\Shift\Domain\Port\In\CreateShiftRequest;
+use App\Shift\Domain\Port\Out\Shift;
+use App\Shift\Domain\Port\Out\ShiftRepository;
 
 final class CreateShiftHandler implements CreateShift
 {
@@ -24,23 +25,48 @@ final class CreateShiftHandler implements CreateShift
         private readonly ShiftWithinSameDayRule $withinSameDayRule,
         private readonly ShiftLengthRule $lengthRule,
         private readonly HolidayRule $holidayRule,
+        private readonly ShiftRepository $shifts,
     ) {}
 
     /**
-     * @return TaskEither<list<Error>, CreateShiftRequest>
+     * @return TaskEither<list<Error>, Shift>
      */
     public function invoke(CreateShiftRequest $request): TaskEither
     {
-        return $request
-        |> Debug::dump(...)
-        |> Validator::loadRules(
+        return Validator::loadRules(
             $this->employeeIdRule,
             $this->countryRule,
             $this->withinSameDayRule,
             $this->lengthRule,
             $this->holidayRule,
-        )->validate(...)
-        |> (fn($a) => $a->run())
-        |> Debug::dump(...);
+        )
+            ->validate($request)
+            ->flatMap($this->persist(...));
+    }
+
+    /**
+     * @return TaskEither<list<Error>, Shift>
+     */
+    private function persist(CreateShiftRequest $request): TaskEither
+    {
+        $shift = Shift::create(
+            $request->employeeId,
+            $request->date ?? throw new \LogicException('Validation guarantees a parsed date.'),
+            $request->startTime ?? throw new \LogicException('Validation guarantees a parsed start time.'),
+            $request->endTime ?? throw new \LogicException('Validation guarantees a parsed end time.'),
+            $request->countryCode,
+        );
+
+        return $this->shifts
+            ->create($shift)
+            ->mapLeft(self::asList(...));
+    }
+
+    /**
+     * @return list<Error>
+     */
+    private static function asList(Error $error): array
+    {
+        return [$error];
     }
 }
