@@ -68,8 +68,7 @@ final class TaskTest extends TestCase
             return 42;
         });
 
-        self::assertSame(42, $task->run());
-        self::assertSame(42, $task->run());
+        self::assertSame([42, 42], [$task->run(), $task->run()]);
         self::assertSame(2, $calls);
     }
 

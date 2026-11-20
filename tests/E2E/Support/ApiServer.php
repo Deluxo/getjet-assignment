@@ -41,20 +41,26 @@ final class ApiServer
         $this->ensureLogDir();
 
         $truncate = fopen($this->logPath, 'w');
+
+        if (false === $truncate) {
+            throw new RuntimeException(sprintf('Failed to open the log file "%s".', $this->logPath));
+        }
+
         fclose($truncate);
 
         $command = [PHP_BINARY, '-S', sprintf('127.0.0.1:%d', $this->port), '-t', $this->projectDir . '/public'];
 
-        $this->process = proc_open($command, [
+        $process = proc_open($command, [
             0 => ['pipe', 'r'],
             1 => ['pipe', 'w'],
             2 => ['pipe', 'w'],
         ], $pipes, $this->projectDir, $this->environment());
 
-        if ($this->process === false) {
+        if ($process === false) {
             throw new RuntimeException('Failed to start the API server process.');
         }
 
+        $this->process = $process;
         $this->pipes = $pipes;
         stream_set_blocking($this->pipes[1], false);
         stream_set_blocking($this->pipes[2], false);
@@ -121,17 +127,19 @@ final class ApiServer
 
     public function stop(): void
     {
-        if ($this->process === null) {
+        if (!is_resource($this->process)) {
             return;
         }
 
+        $process = $this->process;
+
         $this->drain();
-        proc_terminate($this->process);
+        proc_terminate($process);
 
         for ($i = 0; $i < 50; $i++) {
-            $status = proc_get_status($this->process);
+            $status = proc_get_status($process);
 
-            if (!($status['running'] ?? false)) {
+            if (!$status['running']) {
                 break;
             }
 
@@ -140,7 +148,7 @@ final class ApiServer
 
         $this->drain();
         $this->emitLines(true);
-        proc_close($this->process);
+        proc_close($process);
         $this->process = null;
         $this->pipes = [];
     }
@@ -185,7 +193,15 @@ final class ApiServer
         }
 
         $name = stream_socket_get_name($socket, false);
-        $port = (int) explode(':', $name)[1] ?? 0;
+
+        if (false === $name) {
+            fclose($socket);
+
+            throw new RuntimeException('Failed to read the allocated socket name.');
+        }
+
+        $parts = explode(':', $name);
+        $port = (int) ($parts[1] ?? 0);
         fclose($socket);
 
         return $port;
@@ -212,11 +228,12 @@ final class ApiServer
         );
     }
 
+    /**
+     * @return array<string, string>
+     */
     private function environment(): array
     {
-        $env = getenv();
-
-        return array_merge($env === false ? [] : $env, [
+        return array_merge(getenv(), [
             'APP_ENV' => 'test',
             'APP_DEBUG' => '1',
         ]);

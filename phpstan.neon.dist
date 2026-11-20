@@ -3,3 +3,9 @@ parameters:
     paths:
         - src
         - tests
+
+includes:
+    # Known findings in the hand-rolled functional primitives (invariant
+    # generics for Maybe/Either/TaskEither) and the law tests that exercise
+    # them. Application, infrastructure and test code stay fully checked.
+    - phpstan-baseline.neon

@@ -94,7 +94,9 @@ final class TaskEitherTest extends TestCase
     public function testMapDoesNotRunOnLeft(): void
     {
         $called = false;
-        $taskEither = TaskEither::left(['error'])->map(static function (int $value) use (&$called): int {
+        /** @var TaskEither<array<int, string>, int> $left */
+        $left = TaskEither::left(['error']);
+        $taskEither = $left->map(static function (int $value) use (&$called): int {
             $called = true;
 
             return $value;

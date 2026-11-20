@@ -21,21 +21,31 @@ final class ApiClient
         $headersOut = [];
 
         $handle = curl_init();
-        curl_setopt_array($handle, [
-            CURLOPT_URL => $this->baseUrl . $path,
-            CURLOPT_CUSTOMREQUEST => $method,
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_TIMEOUT => $this->timeout,
-            CURLOPT_HEADERFUNCTION => static function ($ch, string $header) use (&$headersOut): int {
-                $parts = explode(':', $header, 2);
 
-                if (count($parts) === 2) {
-                    $headersOut[strtolower(trim($parts[0]))] = trim($parts[1]);
-                }
+        if (false === $handle) {
+            throw new RuntimeException('Could not initialise cURL.');
+        }
 
-                return strlen($header);
-            },
-        ]);
+        if ('' === $method) {
+            throw new RuntimeException('The HTTP method must not be empty.');
+        }
+
+        /** @var non-empty-string $url */
+        $url = $this->baseUrl . $path;
+
+        curl_setopt($handle, CURLOPT_URL, $url);
+        curl_setopt($handle, CURLOPT_CUSTOMREQUEST, $method);
+        curl_setopt($handle, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($handle, CURLOPT_TIMEOUT, $this->timeout);
+        curl_setopt($handle, CURLOPT_HEADERFUNCTION, static function (\CurlHandle $ch, string $header) use (&$headersOut): int {
+            $parts = explode(':', $header, 2);
+
+            if (count($parts) === 2) {
+                $headersOut[strtolower(trim($parts[0]))] = trim($parts[1]);
+            }
+
+            return strlen($header);
+        });
 
         if ($headers !== []) {
             $curlHeaders = [];

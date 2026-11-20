@@ -23,9 +23,9 @@ final class IdentityTest extends TestCase
 
     public function testThunkCanRunMultipleTimes(): void
     {
-        $thunk = Identity::of('value');
+        $value = new \stdClass();
+        $thunk = Identity::of($value);
 
-        self::assertSame('value', $thunk());
-        self::assertSame('value', $thunk());
+        self::assertSame([$value, $value], [$thunk(), $thunk()]);
     }
 }

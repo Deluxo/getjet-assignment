@@ -110,6 +110,11 @@ final class CreateShiftRequestTest extends TestCase
         );
     }
 
+    /**
+     * @template T
+     *
+     * @param Either<Error, T> $either
+     */
     private static function left(Either $either): mixed
     {
         return $either->fold(
@@ -120,6 +125,13 @@ final class CreateShiftRequestTest extends TestCase
 
     /**
      * @return mixed
+     */
+    /**
+     * @template T
+     *
+     * @param Either<Error, T> $either
+     *
+     * @return T
      */
     private static function right(Either $either): mixed
     {

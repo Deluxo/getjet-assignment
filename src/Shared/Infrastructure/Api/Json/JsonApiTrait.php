@@ -16,7 +16,7 @@ trait JsonApiTrait
     /**
      * Parses the request body as a JSON object.
      *
-     * @return Either<string, array> Left is a human-readable error message, Right is the decoded object.
+     * @return Either<string, array<string, mixed>> Left is a human-readable error message, Right is the decoded object.
      */
     private function parseJsonPayload(Request $request): Either
     {
@@ -36,7 +36,10 @@ trait JsonApiTrait
             return Either::Left('Payload must be a JSON object.');
         }
 
-        return Either::Right((array) $decoded);
+        /** @var array<string, mixed> $payload */
+        $payload = (array) $decoded;
+
+        return Either::Right($payload);
     }
 
     /**
@@ -51,21 +54,40 @@ trait JsonApiTrait
      */
     private function parseJsonPayloadAs(string $class, array $map, Request $request): Either
     {
-        return $this->parseJsonPayload($request)->flatMap(static function (array $payload) use ($class, $map): Either {
-            $arguments = [];
+        /** @var Either<string, T> $hydrated */
+        $hydrated = $this->parseJsonPayload($request)
+            ->flatMap(fn (array $payload) => $this->hydrate($class, $map, $payload));
 
-            foreach (array_intersect_key($map, $payload) as $jsonKey => $parameter) {
-                $arguments[$parameter] = $payload[$jsonKey];
-            }
+        return $hydrated;
+    }
 
-            try {
-                return Either::Right((new \ReflectionClass($class))->newInstanceArgs($arguments));
-            } catch (\ArgumentCountError) {
-                return Either::Left('Missing required fields.');
-            } catch (\TypeError) {
-                return Either::Left('Invalid field type.');
-            }
-        });
+    /**
+     * @template T of object
+     *
+     * @param class-string<T> $class
+     * @param array<string, string> $map
+     * @param array<string, mixed> $payload
+     *
+     * @return Either<string, T>
+     */
+    private function hydrate(string $class, array $map, array $payload): Either
+    {
+        $arguments = [];
+
+        foreach (array_intersect_key($map, $payload) as $jsonKey => $parameter) {
+            $arguments[$parameter] = $payload[$jsonKey];
+        }
+
+        try {
+            /** @var T $instance */
+            $instance = (new \ReflectionClass($class))->newInstanceArgs($arguments);
+
+            return Either::Right($instance);
+        } catch (\ArgumentCountError) {
+            return Either::Left('Missing required fields.');
+        } catch (\TypeError) {
+            return Either::Left('Invalid field type.');
+        }
     }
 
     /**

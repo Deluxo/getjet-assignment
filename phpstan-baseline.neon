@@ -1,0 +1,115 @@
+parameters:
+	ignoreErrors:
+		-
+			message: '#^Method App\\Shared\\Functional\\EitherImpl\\Right\:\:flatMap\(\) should return App\\Shared\\Functional\\Either\<mixed, mixed\> but returns mixed\.$#'
+			identifier: return.type
+			count: 1
+			path: src/Shared/Functional/EitherImpl/Right.php
+
+		-
+			message: '#^Trying to invoke mixed but it''s not a callable\.$#'
+			identifier: callable.nonCallable
+			count: 1
+			path: src/Shared/Functional/EitherImpl/Right.php
+
+		-
+			message: '#^Method App\\Shared\\Functional\\Maybe\:\:nothing\(\) should return App\\Shared\\Functional\\MaybeImpl\\Nothing\<T\> but returns App\\Shared\\Functional\\MaybeImpl\\Nothing\<mixed\>\.$#'
+			identifier: return.type
+			count: 1
+			path: src/Shared/Functional/Maybe.php
+
+		-
+			message: '#^Method App\\Shared\\Functional\\Maybe\:\:nullish\(\) return type with generic class App\\Shared\\Functional\\Maybe does not specify its types\: T$#'
+			identifier: missingType.generics
+			count: 1
+			path: src/Shared/Functional/Maybe.php
+
+		-
+			message: '#^Class App\\Shared\\Functional\\MaybeImpl\\Just extends generic class App\\Shared\\Functional\\Maybe but does not specify its types\: T$#'
+			identifier: missingType.generics
+			count: 1
+			path: src/Shared/Functional/MaybeImpl/Just.php
+
+		-
+			message: '#^Method App\\Shared\\Functional\\MaybeImpl\\Just\:\:flatMap\(\) should return App\\Shared\\Functional\\Maybe\<mixed\> but returns mixed\.$#'
+			identifier: return.type
+			count: 1
+			path: src/Shared/Functional/MaybeImpl/Just.php
+
+		-
+			message: '#^Trying to invoke mixed but it''s not a callable\.$#'
+			identifier: callable.nonCallable
+			count: 1
+			path: src/Shared/Functional/MaybeImpl/Just.php
+
+		-
+			message: '#^Class App\\Shared\\Functional\\MaybeImpl\\Nothing extends generic class App\\Shared\\Functional\\Maybe but does not specify its types\: T$#'
+			identifier: missingType.generics
+			count: 1
+			path: src/Shared/Functional/MaybeImpl/Nothing.php
+
+		-
+			message: '#^Method App\\Shared\\Functional\\MaybeImpl\\Nothing\:\:ap\(\) should return App\\Shared\\Functional\\MaybeImpl\\Nothing\<never\> but returns App\\Shared\\Functional\\MaybeImpl\\Nothing\<mixed\>\.$#'
+			identifier: return.type
+			count: 1
+			path: src/Shared/Functional/MaybeImpl/Nothing.php
+
+		-
+			message: '#^Method App\\Shared\\Functional\\MaybeImpl\\Nothing\:\:flatMap\(\) should return App\\Shared\\Functional\\MaybeImpl\\Nothing\<never\> but returns App\\Shared\\Functional\\MaybeImpl\\Nothing\<mixed\>\.$#'
+			identifier: return.type
+			count: 1
+			path: src/Shared/Functional/MaybeImpl/Nothing.php
+
+		-
+			message: '#^Method App\\Shared\\Functional\\MaybeImpl\\Nothing\:\:map\(\) should return App\\Shared\\Functional\\MaybeImpl\\Nothing\<never\> but returns App\\Shared\\Functional\\MaybeImpl\\Nothing\<mixed\>\.$#'
+			identifier: return.type
+			count: 1
+			path: src/Shared/Functional/MaybeImpl/Nothing.php
+
+		-
+			message: '#^Anonymous function should return App\\Shared\\Functional\\Either but returns mixed\.$#'
+			identifier: return.type
+			count: 1
+			path: src/Shared/Functional/TaskEither.php
+
+		-
+			message: '#^Method App\\Shared\\Functional\\TaskEither\:\:ap\(\) should return App\\Shared\\Functional\\TaskEither\<E, mixed\> but returns App\\Shared\\Functional\\TaskEither\<mixed, mixed\>\.$#'
+			identifier: return.type
+			count: 1
+			path: src/Shared/Functional/TaskEither.php
+
+		-
+			message: '#^Method App\\Shared\\Functional\\TaskEither\:\:map\(\) should return App\\Shared\\Functional\\TaskEither\<E, U\> but returns App\\Shared\\Functional\\TaskEither\<mixed, mixed\>\.$#'
+			identifier: return.type
+			count: 1
+			path: src/Shared/Functional/TaskEither.php
+
+		-
+			message: '#^Parameter \#1 \$thunk of class App\\Shared\\Functional\\TaskEither constructor expects Closure\(\)\: App\\Shared\\Functional\\Either\<E\|EF, U\>, Closure\(\)\: \(App\\Shared\\Functional\\Either\<EF, U\>\|App\\Shared\\Functional\\EitherImpl\\Left\<E\>\) given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Shared/Functional/TaskEither.php
+
+		-
+			message: '#^Parameter \#1 \$transform of method App\\Shared\\Functional\\TaskEither\<mixed,mixed\>\:\:map\(\) expects callable\(mixed\)\: mixed, Closure\(callable\)\: mixed given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Shared/Functional/TaskEither.php
+
+		-
+			message: '#^Parameter \#1 \$wrappedFn of method App\\Shared\\Functional\\TaskEither\<array\<int, string\>,never\>\:\:ap\(\) expects App\\Shared\\Functional\\Laws\\Applicative\<mixed\>, App\\Shared\\Functional\\TaskEither\<never, static\-Closure\(int\)\: int\> given\.$#'
+			identifier: argument.type
+			count: 1
+			path: tests/Unit/Shared/Functional/TaskEitherTest.php
+
+		-
+			message: '#^Parameter \#1 \$wrappedFn of method App\\Shared\\Functional\\TaskEither\<never,int\>\:\:ap\(\) expects App\\Shared\\Functional\\Laws\\Applicative\<mixed\>, App\\Shared\\Functional\\TaskEither\<never, static\-Closure\(int\)\: int\> given\.$#'
+			identifier: argument.type
+			count: 1
+			path: tests/Unit/Shared/Functional/TaskEitherTest.php
+
+		-
+			message: '#^Parameter \#2 \$onRight of method App\\Shared\\Functional\\Either\<never,mixed\>\:\:fold\(\) expects callable\(mixed\)\: int, Closure\(int\)\: int given\.$#'
+			identifier: argument.type
+			count: 1
+			path: tests/Unit/Shared/Functional/TaskEitherTest.php

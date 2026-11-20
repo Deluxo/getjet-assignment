@@ -98,6 +98,7 @@ abstract class AbstractApiTestCase extends TestCase
         $body = $response->json();
         self::assertIsArray($body, 'The 201 body should be a JSON object.');
 
+        /** @var array<string, mixed> $body */
         return $body;
     }
 
@@ -116,6 +117,7 @@ abstract class AbstractApiTestCase extends TestCase
         self::assertIsArray($body['errors'] ?? null, 'The error body should contain an "errors" array.');
         self::assertNotSame([], $body['errors'], 'The "errors" array should not be empty.');
 
+        /** @var array<string, mixed> $body */
         return $body;
     }
 

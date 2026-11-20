@@ -47,8 +47,10 @@ final class ScaffoldDomainCommandTest extends TestCase
 
     public function testSecondRunIsIdempotent(): void
     {
-        self::assertSame(Command::SUCCESS, $this->tester()->execute(['name' => 'Shift']));
-        self::assertSame(Command::SUCCESS, $this->tester()->execute(['name' => 'Shift']));
+        $first = $this->tester()->execute(['name' => 'Shift']);
+        $second = $this->tester()->execute(['name' => 'Shift']);
+
+        self::assertSame([Command::SUCCESS, Command::SUCCESS], [$first, $second]);
     }
 
     public function testRejectsNamesThatAreNotPascalCase(): void
@@ -76,6 +78,7 @@ final class ScaffoldDomainCommandTest extends TestCase
         );
 
         foreach ($items as $item) {
+            /** @var \SplFileInfo $item */
             $item->isDir() ? rmdir($item->getPathname()) : unlink($item->getPathname());
         }
 

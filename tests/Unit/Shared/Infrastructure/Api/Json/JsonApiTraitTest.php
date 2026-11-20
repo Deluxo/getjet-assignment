@@ -61,6 +61,7 @@ final class JsonApiTraitTest extends TestCase
 
     public function testUnwrapReturnsCreatedForRight(): void
     {
+        /** @var TaskEither<string|list<Error>, ToJson> $task */
         $task = TaskEither::right(new RightValue());
 
         $response = $this->host->unwrap($task);
@@ -73,6 +74,7 @@ final class JsonApiTraitTest extends TestCase
     {
         /** @var list<Error> $errors */
         $errors = [new Error('boom', 'Boom.')];
+        /** @var TaskEither<string|list<Error>, ToJson> $task */
         $task = TaskEither::left($errors);
 
         $response = $this->host->unwrap($task);
@@ -89,11 +91,10 @@ final class JsonApiTraitTest extends TestCase
     {
         /** @var list<Error> $errors */
         $errors = [new Error($code, 'Boom.')];
+        /** @var TaskEither<string|list<Error>, ToJson> $task */
+        $task = TaskEither::left($errors);
 
-        self::assertSame(
-            $status,
-            $this->host->unwrap(TaskEither::left($errors))->getStatusCode(),
-        );
+        self::assertSame($status, $this->host->unwrap($task)->getStatusCode());
     }
 
     /**
@@ -113,6 +114,7 @@ final class JsonApiTraitTest extends TestCase
 
     public function testUnwrapEncodesStringLeftAsInvalidRequest(): void
     {
+        /** @var TaskEither<string|list<Error>, ToJson> $task */
         $task = TaskEither::left('Invalid JSON.');
 
         $response = $this->host->unwrap($task);
@@ -128,6 +130,7 @@ final class JsonApiTraitTest extends TestCase
     {
         /** @var list<Error> $errors */
         $errors = [new Error('boom', 'Boom.')];
+        /** @var TaskEither<string|list<Error>, ToJson> $task */
         $task = TaskEither::left($errors);
 
         $response = $this->host->unwrap(
@@ -152,6 +155,7 @@ final class JsonApiTraitTest extends TestCase
             onLeft: static fn(): null => null,
             onRight: static fn(TestRequest $value): TestRequest => $value,
         );
+        self::assertInstanceOf(TestRequest::class, $request);
 
         self::assertSame('employee-123', $request->employeeId);
         self::assertSame('2026-10-06', $request->date);
@@ -170,6 +174,7 @@ final class JsonApiTraitTest extends TestCase
             onLeft: static fn(): null => null,
             onRight: static fn(TestRequest $value): TestRequest => $value,
         );
+        self::assertInstanceOf(TestRequest::class, $request);
 
         self::assertSame('123', $request->employeeId);
     }
@@ -187,6 +192,7 @@ final class JsonApiTraitTest extends TestCase
             onLeft: static fn(): null => null,
             onRight: static fn(TestRequest $value): TestRequest => $value,
         );
+        self::assertInstanceOf(TestRequest::class, $request);
 
         self::assertNull($request->date);
     }
@@ -214,7 +220,9 @@ final class JsonApiTraitTest extends TestCase
     }
 
     /**
-     * @param Either<string, array> $result
+     * @template T
+     *
+     * @param Either<string, T> $result
      */
     private function leftValue(Either $result): string
     {
@@ -234,6 +242,9 @@ final class JsonApiTraitHost
 {
     use JsonApiTrait;
 
+    /**
+     * @return Either<string, array<string, mixed>>
+     */
     public function parse(Request $request): Either
     {
         return $this->parseJsonPayload($request);
