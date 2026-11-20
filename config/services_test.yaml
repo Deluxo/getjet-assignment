@@ -1,2 +1,7 @@
 services:
     App\Tests\Support\NagerApiMockResponseFactory: ~
+
+    # Keep ports that no production service consumes yet reachable from tests.
+    App\Notification\Domain\Port\Out\NotificationStore:
+        alias: App\Notification\Infrastructure\Persistence\Doctrine\DoctrineNotificationStore
+        public: true
