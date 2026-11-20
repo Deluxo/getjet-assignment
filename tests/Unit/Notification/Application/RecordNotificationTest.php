@@ -75,6 +75,12 @@ final class RecordNotificationTest extends TestCase
         return new RecordNotification($store, new SendNotification($sender, $store, new NullLogger()));
     }
 
+    /**
+     * @template E
+     * @template T
+     *
+     * @param Either<E, T> $either
+     */
     private static function left(Either $either): mixed
     {
         return $either->fold(

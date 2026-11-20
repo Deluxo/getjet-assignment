@@ -83,6 +83,12 @@ final class SendNotificationTest extends TestCase
         return new SendNotification($sender, $store, $logger ?? new NullLogger());
     }
 
+    /**
+     * @template E
+     * @template T
+     *
+     * @param Either<E, T> $either
+     */
     private static function left(Either $either): mixed
     {
         return $either->fold(

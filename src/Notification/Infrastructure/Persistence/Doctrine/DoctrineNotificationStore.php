@@ -87,7 +87,8 @@ final readonly class DoctrineNotificationStore implements NotificationStore
                     self::PENDING_SQL,
                     [
                         'max_attempts' => $maxAttempts,
-                        'created_before' => $createdBefore->format('Y-m-d H:i:s'),
+                        // SQLite's CURRENT_TIMESTAMP is UTC; compare in the same zone.
+                        'created_before' => $createdBefore->setTimezone(new \DateTimeZone('UTC'))->format('Y-m-d H:i:s'),
                         'limit' => $limit,
                     ],
                     [

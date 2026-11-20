@@ -31,6 +31,8 @@ final class FakeNotificationStore implements NotificationStore
      */
     public array $pending = [];
 
+    public ?int $lastLimit = null;
+
     public function __construct(
         private readonly bool $isNew = true,
         private readonly ?Error $recordError = null,
@@ -55,6 +57,8 @@ final class FakeNotificationStore implements NotificationStore
 
     public function pending(\DateTimeImmutable $createdBefore, int $limit, int $maxAttempts): TaskEither
     {
+        $this->lastLimit = $limit;
+
         if (null !== $this->pendingError) {
             return TaskEither::left($this->pendingError);
         }

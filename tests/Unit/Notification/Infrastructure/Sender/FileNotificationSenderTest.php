@@ -56,8 +56,8 @@ final class FileNotificationSenderTest extends TestCase
 
         self::assertIsArray($lines);
         self::assertCount(2, $lines);
-        self::assertSame('employee-1', json_decode($lines[0], true, 512, JSON_THROW_ON_ERROR)['employee_id']);
-        self::assertSame('employee-2', json_decode($lines[1], true, 512, JSON_THROW_ON_ERROR)['employee_id']);
+        self::assertSame('employee-1', self::decode($lines[0])['employee_id']);
+        self::assertSame('employee-2', self::decode($lines[1])['employee_id']);
     }
 
     public function testReturnsAnErrorWhenTheDirectoryCannotBeCreated(): void
@@ -76,6 +76,27 @@ final class FileNotificationSenderTest extends TestCase
         );
     }
 
+    /**
+     * @return array<string, mixed>
+     */
+    private static function decode(string $json): array
+    {
+        $decoded = json_decode($json, true, 512, JSON_THROW_ON_ERROR);
+
+        if (!is_array($decoded)) {
+            throw new \LogicException('Expected a JSON object.');
+        }
+
+        /** @var array<string, mixed> $decoded */
+        return $decoded;
+    }
+
+    /**
+     * @template E
+     * @template T
+     *
+     * @param Either<E, T> $either
+     */
     private static function left(Either $either): mixed
     {
         return $either->fold(
