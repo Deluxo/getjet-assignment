@@ -73,7 +73,7 @@ final readonly class DoctrineShiftRepository implements ShiftRepository
                 } catch (DbalException $exception) {
                     $this->logger->error('Could not save a shift.', ['exception' => $exception]);
 
-                    return Either::Left(new Error('shift_repository', '.'));
+                    return Either::Left(new Error('shift_repository', 'The shift could not be saved.'));
                 }
             }
 

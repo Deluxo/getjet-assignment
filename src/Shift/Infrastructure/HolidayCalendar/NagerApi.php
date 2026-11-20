@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Shift\Infrastructure\HolidayCalendar;
 
-use App\Shared\Debug;
 use App\Shared\Error;
 use App\Shared\Functional\Either;
 use App\Shared\Functional\TaskEither;
