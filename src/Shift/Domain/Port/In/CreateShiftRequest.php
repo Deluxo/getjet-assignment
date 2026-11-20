@@ -6,12 +6,50 @@ namespace App\Shift\Domain\Port\In;
 
 final readonly class CreateShiftRequest
 {
+    public ?\DateTimeImmutable $date;
+    public ?\DateTimeImmutable $startTime;
+    public ?\DateTimeImmutable $endTime;
+
     public function __construct(
         public string $employeeId,
-        public string $date,
-        public string $startTime,
-        public string $endTime,
+        string $date,
+        string $startTime,
+        string $endTime,
         public string $countryCode,
     ) {
+        $this->date = self::parseDate($date);
+        $this->startTime = self::parseTime($startTime);
+        $this->endTime = self::parseTime($endTime);
+    }
+
+    public static function parseDate(string $value): ?\DateTimeImmutable
+    {
+        return self::parse($value, '!Y-m-d', 'Y-m-d');
+    }
+
+    public static function parseTime(string $value): ?\DateTimeImmutable
+    {
+        return self::parse($value, '!H:i', 'H:i');
+    }
+
+    private static function parse(string $value, string $format, string $canonical): ?\DateTimeImmutable
+    {
+        $date = \DateTimeImmutable::createFromFormat($format, $value);
+
+        if (false === $date) {
+            return null;
+        }
+
+        $errors = \DateTimeImmutable::getLastErrors();
+
+        if (false !== $errors && (0 < $errors['warning_count'] || 0 < $errors['error_count'])) {
+            return null;
+        }
+
+        if ($date->format($canonical) !== $value) {
+            return null;
+        }
+
+        return $date;
     }
 }

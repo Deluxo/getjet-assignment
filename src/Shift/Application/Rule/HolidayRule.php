@@ -24,7 +24,7 @@ final readonly class HolidayRule implements ValidationRule
      */
     public function apply(mixed $subject): TaskEither
     {
-        $date = self::parseDate($subject->date);
+        $date = $subject->date;
 
         if (null === $date) {
             return TaskEither::left(Error::forField('date', 'is not a valid date.'));
@@ -34,22 +34,5 @@ final readonly class HolidayRule implements ValidationRule
             ->flatMap(static fn(bool $isHoliday): TaskEither => $isHoliday
                 ? TaskEither::left(Error::forField('date', 'is a public holiday.'))
                 : TaskEither::right($subject));
-    }
-
-    private static function parseDate(string $value): ?\DateTimeImmutable
-    {
-        $date = \DateTimeImmutable::createFromFormat('!Y-m-d', $value);
-
-        if (false === $date) {
-            return null;
-        }
-
-        $errors = \DateTimeImmutable::getLastErrors();
-
-        if (false !== $errors && (0 < $errors['warning_count'] || 0 < $errors['error_count'])) {
-            return null;
-        }
-
-        return $date;
     }
 }

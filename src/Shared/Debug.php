@@ -17,7 +17,7 @@ namespace App\Shared;
  */
 final class Debug
 {
-    public static function dump(mixed ...$values): void
+    public static function dump(mixed ...$values): mixed
     {
         $caller = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 1)[0] ?? [];
         $location = sprintf('%s:%d', $caller['file'] ?? 'unknown', $caller['line'] ?? 0);
@@ -33,6 +33,8 @@ final class Debug
         if (false === file_put_contents('php://stderr', $line)) {
             error_log($line);
         }
+
+        return $values;
     }
 
     private static function format(mixed $value): string
