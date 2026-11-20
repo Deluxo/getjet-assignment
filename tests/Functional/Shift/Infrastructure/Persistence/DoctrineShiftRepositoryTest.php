@@ -58,7 +58,7 @@ final class DoctrineShiftRepositoryTest extends KernelTestCase
             ->run();
 
         self::assertEquals(
-            Error::forField('startTime', 'overlaps another shift for this employee.'),
+            new Error('shift_overlap', 'The shift overlaps another shift for this employee.'),
             self::left($result),
         );
         self::assertSame(1, self::rowCount());
@@ -73,7 +73,7 @@ final class DoctrineShiftRepositoryTest extends KernelTestCase
             ->run();
 
         self::assertEquals(
-            Error::forField('startTime', 'overlaps another shift for this employee.'),
+            new Error('shift_overlap', 'The shift overlaps another shift for this employee.'),
             self::left($result),
         );
         self::assertSame(1, self::rowCount());

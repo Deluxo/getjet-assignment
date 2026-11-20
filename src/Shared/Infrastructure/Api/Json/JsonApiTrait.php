@@ -101,6 +101,28 @@ trait JsonApiTrait
                 static fn(Error $error): array => ['code' => $error->code(), 'message' => $error->message()],
                 $errors,
             ),
-        ], Response::HTTP_BAD_REQUEST);
+        ], self::statusFor($errors));
+    }
+
+    /**
+     * Maps the failure channel onto HTTP semantics: unparseable requests,
+     * business-rule rejections, conflicts, upstream outages and storage
+     * failures are not the same kind of error.
+     *
+     * @param list<Error> $errors
+     */
+    private static function statusFor(array $errors): int
+    {
+        if ([] === $errors) {
+            return Response::HTTP_BAD_REQUEST;
+        }
+
+        return match ($errors[0]->code()) {
+            'invalid_request' => Response::HTTP_BAD_REQUEST,
+            'shift_overlap' => Response::HTTP_CONFLICT,
+            'holiday_calendar' => Response::HTTP_SERVICE_UNAVAILABLE,
+            'shift_repository', 'notification_store', 'notification_sender' => Response::HTTP_INTERNAL_SERVER_ERROR,
+            default => Response::HTTP_UNPROCESSABLE_ENTITY,
+        };
     }
 }

@@ -83,8 +83,8 @@ final class CreateShiftTest extends WebTestCase
 
         $response = self::send($client, ['start_time' => '16:00', 'end_time' => '18:00'] + $payload);
 
-        self::assertSame(400, $response->getStatusCode());
-        self::assertSame('startTime', self::firstErrorCode($response));
+        self::assertSame(409, $response->getStatusCode());
+        self::assertSame('shift_overlap', self::firstErrorCode($response));
     }
 
     public function testAllowsAShiftThatStartsWhenAnotherEnds(): void
@@ -100,7 +100,7 @@ final class CreateShiftTest extends WebTestCase
     {
         $response = self::post(['date' => '2026-12-25'] + self::payload());
 
-        self::assertSame(400, $response->getStatusCode());
+        self::assertSame(422, $response->getStatusCode());
         self::assertSame('date', self::firstErrorCode($response));
     }
 
@@ -108,7 +108,7 @@ final class CreateShiftTest extends WebTestCase
     {
         $response = self::post(['country_code' => 'EE'] + self::payload());
 
-        self::assertSame(400, $response->getStatusCode());
+        self::assertSame(422, $response->getStatusCode());
         self::assertSame('countryCode', self::firstErrorCode($response));
     }
 
@@ -116,7 +116,7 @@ final class CreateShiftTest extends WebTestCase
     {
         $response = self::post(['employee_id' => ' '] + self::payload());
 
-        self::assertSame(400, $response->getStatusCode());
+        self::assertSame(422, $response->getStatusCode());
         self::assertSame('employeeId', self::firstErrorCode($response));
     }
 
@@ -124,8 +124,16 @@ final class CreateShiftTest extends WebTestCase
     {
         $response = self::post(['start_time' => '08:00', 'end_time' => '20:01'] + self::payload());
 
-        self::assertSame(400, $response->getStatusCode());
+        self::assertSame(422, $response->getStatusCode());
         self::assertSame('endTime', self::firstErrorCode($response));
+    }
+
+    public function testReturnsServiceUnavailableWhenTheHolidayCalendarFails(): void
+    {
+        $response = self::post(['date' => '2099-01-02'] + self::payload());
+
+        self::assertSame(503, $response->getStatusCode());
+        self::assertSame('holiday_calendar', self::firstErrorCode($response));
     }
 
     /**

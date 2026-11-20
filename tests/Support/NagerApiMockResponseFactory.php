@@ -14,6 +14,11 @@ final class NagerApiMockResponseFactory
      */
     public function __invoke(string $method, string $url, array $options): ResponseInterface
     {
+        // Sentinel year used by the resilience tests to simulate an outage.
+        if (str_contains($url, '/Holidays/LT/2099')) {
+            return new MockResponse('upstream unavailable', ['http_code' => 500]);
+        }
+
         if (!str_contains($url, '/Holidays/LT/2026')) {
             return new MockResponse('[]');
         }

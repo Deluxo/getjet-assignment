@@ -55,7 +55,7 @@ final readonly class DoctrineShiftRepository implements ShiftRepository
                     $affected = (int) $this->connection->executeStatement(self::INSERT_SQL, self::parameters($shift));
 
                     if (0 === $affected) {
-                        return Either::Left(Error::forField('startTime', 'overlaps another shift for this employee.'));
+                        return Either::Left(new Error('shift_overlap', 'The shift overlaps another shift for this employee.'));
                     }
 
                     return Either::Right($shift);

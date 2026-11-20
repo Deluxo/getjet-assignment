@@ -139,7 +139,7 @@ final class CreateShiftHandlerTest extends TestCase
     public function testRejectsAnOverlappingShiftWithoutStoringIt(): void
     {
         $shifts = new FakeShiftRepository(
-            Error::forField('startTime', 'overlaps another shift for this employee.'),
+            new Error('shift_overlap', 'The shift overlaps another shift for this employee.'),
         );
 
         $result = self::handler(new FakeHolidayCalendar(false), $shifts)
@@ -147,7 +147,7 @@ final class CreateShiftHandlerTest extends TestCase
             ->run();
 
         self::assertEquals(
-            [Error::forField('startTime', 'overlaps another shift for this employee.')],
+            [new Error('shift_overlap', 'The shift overlaps another shift for this employee.')],
             self::left($result),
         );
         self::assertSame([], $shifts->saved);

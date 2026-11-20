@@ -93,7 +93,7 @@ final class CreateShiftNotificationTest extends WebTestCase
             'country_code' => 'LT',
         ], JSON_THROW_ON_ERROR));
 
-        self::assertSame(400, $client->getResponse()->getStatusCode());
+        self::assertSame(422, $client->getResponse()->getStatusCode());
 
         self::assertSame(0, self::rowCount(
             'SELECT COUNT(*) FROM shift_notifications WHERE employee_id = ?',

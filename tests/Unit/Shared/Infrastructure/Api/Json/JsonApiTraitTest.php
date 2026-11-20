@@ -9,6 +9,7 @@ use App\Shared\Functional\Either;
 use App\Shared\Functional\TaskEither;
 use App\Shared\Infrastructure\Api\Json\JsonApiTrait;
 use App\Shared\Infrastructure\Api\Json\ToJson;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -68,7 +69,7 @@ final class JsonApiTraitTest extends TestCase
         self::assertSame(['id' => 'shift-1'], json_decode((string) $response->getContent(), true));
     }
 
-    public function testUnwrapReturnsBadRequestForLeftByDefault(): void
+    public function testUnwrapReturnsUnprocessableEntityForFieldErrors(): void
     {
         /** @var list<Error> $errors */
         $errors = [new Error('boom', 'Boom.')];
@@ -76,11 +77,38 @@ final class JsonApiTraitTest extends TestCase
 
         $response = $this->host->unwrap($task);
 
-        self::assertSame(Response::HTTP_BAD_REQUEST, $response->getStatusCode());
+        self::assertSame(Response::HTTP_UNPROCESSABLE_ENTITY, $response->getStatusCode());
         self::assertSame(
             ['errors' => [['code' => 'boom', 'message' => 'Boom.']]],
             json_decode((string) $response->getContent(), true),
         );
+    }
+
+    #[DataProvider('failureStatuses')]
+    public function testMapsErrorCodesOntoHttpStatuses(string $code, int $status): void
+    {
+        /** @var list<Error> $errors */
+        $errors = [new Error($code, 'Boom.')];
+
+        self::assertSame(
+            $status,
+            $this->host->unwrap(TaskEither::left($errors))->getStatusCode(),
+        );
+    }
+
+    /**
+     * @return iterable<string, array{string, int}>
+     */
+    public static function failureStatuses(): iterable
+    {
+        yield 'parse failure' => ['invalid_request', Response::HTTP_BAD_REQUEST];
+        yield 'field error' => ['startTime', Response::HTTP_UNPROCESSABLE_ENTITY];
+        yield 'unknown code' => ['unexpected', Response::HTTP_UNPROCESSABLE_ENTITY];
+        yield 'overlap' => ['shift_overlap', Response::HTTP_CONFLICT];
+        yield 'holiday api' => ['holiday_calendar', Response::HTTP_SERVICE_UNAVAILABLE];
+        yield 'shift storage' => ['shift_repository', Response::HTTP_INTERNAL_SERVER_ERROR];
+        yield 'notification storage' => ['notification_store', Response::HTTP_INTERNAL_SERVER_ERROR];
+        yield 'notification sender' => ['notification_sender', Response::HTTP_INTERNAL_SERVER_ERROR];
     }
 
     public function testUnwrapEncodesStringLeftAsInvalidRequest(): void
