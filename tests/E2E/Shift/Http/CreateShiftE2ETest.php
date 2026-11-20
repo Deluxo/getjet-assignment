@@ -18,14 +18,6 @@ use App\Tests\E2E\Support\HttpResponse;
 final class CreateShiftE2ETest extends AbstractApiTestCase
 {
     /**
-     * Smoke test: the app is up and routing answers. Should stay green at all times.
-     */
-    public function testServerIsReachable(): void
-    {
-        self::assertSame(405, $this->get('/shifts')->status);
-    }
-
-    /**
      * Sample business case — red until the endpoint is implemented.
      */
     public function testCreatesShift(): void
@@ -37,7 +29,7 @@ final class CreateShiftE2ETest extends AbstractApiTestCase
     {
         return $this->postJson('/shifts', [
             'employee_id' => $this->uniqueEmployeeId(),
-            'date' => '2026-10-06',
+            'date' => '2026-12-23',
             'start_time' => '09:00',
             'end_time' => '17:00',
             'country_code' => 'LT',

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Shift\Infrastructure\HolidayCalendar;
 
+use App\Shared\Debug;
 use App\Shared\Error;
 use App\Shared\Functional\Either;
 use App\Shared\Functional\TaskEither;
@@ -22,8 +23,7 @@ final readonly class NagerApi implements HolidayCalendar
         private HttpClientInterface $httpClient,
         private CacheItemPoolInterface $cache,
         private LoggerInterface $logger,
-    ) {
-    }
+    ) {}
 
     /**
      * @return TaskEither<Error, bool>
@@ -43,7 +43,7 @@ final readonly class NagerApi implements HolidayCalendar
             }
 
             return $this->fetch($country, $year)->fold(
-                static fn (Error $error): Either => Either::Left($error),
+                static fn(Error $error): Either => Either::Left($error),
                 function (array $dates) use ($key, $target): Either {
                     $this->write($key, $dates);
 
@@ -127,7 +127,7 @@ final readonly class NagerApi implements HolidayCalendar
             }
 
             $payload = json_decode($response->getContent(false), false, 512, JSON_THROW_ON_ERROR);
-        } catch (HttpClientException|\JsonException $exception) {
+        } catch (HttpClientException | \JsonException $exception) {
             $this->logger->warning('Could not fetch public holidays.', [
                 'country' => $country,
                 'year' => $year,

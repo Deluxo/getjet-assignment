@@ -18,8 +18,6 @@ final class NagerApiMockResponseFactory
             return new MockResponse('[]');
         }
 
-        return new MockResponse(
-            '[{"date":"2026-01-01","nationalHoliday":true,"holidayTypes":["Public"]}]',
-        );
+        return MockResponse::fromFile(__DIR__.'/Fixtures/lt-2026.json');
     }
 }

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Shift\Application;
 
+use App\Shared\Debug;
 use App\Shared\Error;
 use App\Shared\Functional\TaskEither;
 use App\Shared\Validation\Validator;
@@ -22,9 +23,12 @@ final class CreateShiftHandler implements CreateShift
      */
     public function invoke(CreateShiftRequest $request): TaskEither
     {
-        return TaskEither::right($request)
-            ->flatMap(fn(CreateShiftRequest $request): TaskEither => Validator::loadRules(
-                $this->holidayRule,
-            )->validate($request));
+        $a =  $request
+        |> Validator::loadRules($this->holidayRule)->validate(...)
+        |> (fn($a) => $a->run());
+
+        Debug::dump($a);
+
+        return $a;
     }
 }
