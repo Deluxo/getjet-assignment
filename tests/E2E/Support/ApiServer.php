@@ -217,7 +217,7 @@ final class ApiServer
         $env = getenv();
 
         return array_merge($env === false ? [] : $env, [
-            'APP_ENV' => 'dev',
+            'APP_ENV' => 'test',
             'APP_DEBUG' => '1',
         ]);
     }

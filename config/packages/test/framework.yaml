@@ -1,2 +1,11 @@
 framework:
     test: true
+    http_client:
+        scoped_clients:
+            holiday_calendar.nager_api:
+                base_uri: 'https://nagerholidays.com/api/v4/'
+                mock_response_factory: 'App\Tests\Support\NagerApiMockResponseFactory'
+    cache:
+        pools:
+            cache.holiday_calendar:
+                adapter: cache.adapter.array

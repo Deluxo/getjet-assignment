@@ -1,2 +1,11 @@
 framework:
     secret: '%env(APP_SECRET)%'
+    http_client:
+        scoped_clients:
+            holiday_calendar.nager_api:
+                base_uri: '%env(NAGER_API_BASE_URL)%'
+                timeout: 2
+    cache:
+        pools:
+            cache.holiday_calendar:
+                adapter: cache.adapter.filesystem

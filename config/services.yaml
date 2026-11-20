@@ -12,4 +12,10 @@ services:
         arguments:
             $srcDir: '%kernel.project_dir%/src'
 
+    App\Shift\Infrastructure\HolidayCalendar\NagerApi:
+        arguments:
+            $httpClient: '@holiday_calendar.nager_api'
+            $cache: '@cache.holiday_calendar'
+
     App\Shift\Domain\Port\In\CreateShift: '@App\Shift\Application\CreateShiftHandler'
+    App\Shift\Domain\Port\Out\HolidayCalendar: '@App\Shift\Infrastructure\HolidayCalendar\NagerApi'
