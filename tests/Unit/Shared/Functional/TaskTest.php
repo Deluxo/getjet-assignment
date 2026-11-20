@@ -59,26 +59,26 @@ final class TaskTest extends TestCase
         self::assertSame(['first', 'second'], $order);
     }
 
-    public function testCannotBeRunTwice(): void
+    public function testCanBeRunMoreThanOnce(): void
     {
-        $task = Task::of(static fn (): int => 1);
-        $task->run();
+        $calls = 0;
+        $task = Task::of(static function () use (&$calls): int {
+            ++$calls;
 
-        $this->expectException(\LogicException::class);
-        $this->expectExceptionMessage('already been run');
+            return 42;
+        });
 
-        $task->run();
+        self::assertSame(42, $task->run());
+        self::assertSame(42, $task->run());
+        self::assertSame(2, $calls);
     }
 
-    public function testDerivedTaskSharesTheExecutionGuard(): void
+    public function testDerivedTaskCanBeRunIndependently(): void
     {
         $base = Task::of(static fn (): int => 1);
         $mapped = $base->map(static fn (int $value): int => $value + 1);
 
         self::assertSame(2, $mapped->run());
-
-        $this->expectException(\LogicException::class);
-
-        $base->run();
+        self::assertSame(1, $base->run());
     }
 }

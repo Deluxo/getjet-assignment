@@ -10,8 +10,8 @@ use App\Shared\Functional\Laws\Monad;
 /**
  * A lazy computation that either fails (Left) or succeeds (Right).
  *
- * Nothing inside the thunk runs until {@see self::run()} is called, and a
- * task either (or any task either derived from it) can only be executed once.
+ * Nothing inside the thunk runs until {@see self::run()} is called; every call
+ * re-executes the thunk.
  *
  * @implements Monad<T>
  *
@@ -24,8 +24,6 @@ final class TaskEither implements Monad
      * @var \Closure(): Either<E, T>
      */
     private readonly \Closure $thunk;
-
-    private bool $started = false;
 
     /**
      * @param \Closure(): Either<E, T> $thunk
@@ -197,12 +195,6 @@ final class TaskEither implements Monad
      */
     public function run(): Either
     {
-        if ($this->started) {
-            throw new \LogicException('This task either has already been run.');
-        }
-
-        $this->started = true;
-
         return ($this->thunk)();
     }
 }

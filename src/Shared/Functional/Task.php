@@ -7,8 +7,8 @@ namespace App\Shared\Functional;
 use App\Shared\Functional\Laws\Functor;
 
 /**
- * A lazy computation. Nothing inside the thunk runs until {@see self::run()} is called,
- * and a task (or any task derived from it) can only be executed once.
+ * A lazy computation. Nothing inside the thunk runs until {@see self::run()} is
+ * called; every call re-executes the thunk.
  *
  * @implements Functor<T>
  *
@@ -20,8 +20,6 @@ final class Task implements Functor
      * @var \Closure(): T
      */
     private readonly \Closure $thunk;
-
-    private bool $started = false;
 
     /**
      * @param \Closure(): T $thunk
@@ -78,12 +76,6 @@ final class Task implements Functor
      */
     public function run(): mixed
     {
-        if ($this->started) {
-            throw new \LogicException('This task has already been run.');
-        }
-
-        $this->started = true;
-
         return ($this->thunk)();
     }
 }

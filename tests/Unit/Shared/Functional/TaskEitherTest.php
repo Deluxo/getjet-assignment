@@ -269,18 +269,21 @@ final class TaskEitherTest extends TestCase
         self::assertSame('left:2', $leftTask->run());
     }
 
-    public function testCannotBeRunTwice(): void
+    public function testCanBeRunMoreThanOnce(): void
     {
-        $taskEither = TaskEither::right(1);
-        $taskEither->run();
+        $calls = 0;
+        $taskEither = TaskEither::defer(static function () use (&$calls): Either {
+            ++$calls;
 
-        $this->expectException(\LogicException::class);
-        $this->expectExceptionMessage('already been run');
+            return Either::Right(1);
+        });
 
-        $taskEither->run();
+        self::assertTrue($taskEither->run()->isRight());
+        self::assertTrue($taskEither->run()->isRight());
+        self::assertSame(2, $calls);
     }
 
-    public function testDerivedTaskEitherSharesTheExecutionGuard(): void
+    public function testDerivedTaskEitherCanBeRunIndependently(): void
     {
         $base = TaskEither::right(1);
         $mapped = $base->map(static fn (int $value): int => $value + 1);
@@ -292,10 +295,13 @@ final class TaskEitherTest extends TestCase
                 static fn (int $value): int => $value,
             ),
         );
-
-        $this->expectException(\LogicException::class);
-
-        $base->run();
+        self::assertSame(
+            1,
+            $base->run()->fold(
+                static fn (): int => -1,
+                static fn (int $value): int => $value,
+            ),
+        );
     }
 }
 
