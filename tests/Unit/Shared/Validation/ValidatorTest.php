@@ -85,6 +85,54 @@ final class ValidatorTest extends TestCase
         self::assertInstanceOf(\ArrayObject::class, self::right($validator->validate(new \stdClass())->run()));
     }
 
+    public function testPromotesTheValidatedSubject(): void
+    {
+        $subject = new \stdClass();
+
+        $result = Validator::loadRules(
+            $this->rule(static fn (mixed $subject): TaskEither => TaskEither::right($subject)),
+        )->validateInto(
+            $subject,
+            static fn (mixed $validated): Either => Either::Right('promoted'),
+        )->run();
+
+        self::assertSame('promoted', self::right($result));
+    }
+
+    public function testDoesNotPromoteWhenARuleJams(): void
+    {
+        $error = Error::forField('date', 'is a public holiday.');
+        $promoted = false;
+
+        $result = Validator::loadRules(
+            $this->rule(static fn (mixed $subject): TaskEither => TaskEither::left($error)),
+        )->validateInto(
+            new \stdClass(),
+            static function () use (&$promoted): Either {
+                $promoted = true;
+
+                return Either::Right('promoted');
+            },
+        )->run();
+
+        self::assertSame([$error], self::left($result));
+        self::assertFalse($promoted);
+    }
+
+    public function testReportsPromotionFailuresAsAList(): void
+    {
+        $error = Error::forField('date', 'is not a valid date.');
+
+        $result = Validator::loadRules(
+            $this->rule(static fn (mixed $subject): TaskEither => TaskEither::right($subject)),
+        )->validateInto(
+            new \stdClass(),
+            static fn (mixed $validated): Either => Either::Left($error),
+        )->run();
+
+        self::assertSame([$error], self::left($result));
+    }
+
     private function rule(\Closure $apply): ValidationRule
     {
         return new class($apply) implements ValidationRule {

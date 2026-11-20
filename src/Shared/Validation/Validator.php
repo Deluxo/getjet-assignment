@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Shared\Validation;
 
 use App\Shared\Error;
+use App\Shared\Functional\Either;
 use App\Shared\Functional\TaskEither;
 
 /**
@@ -38,13 +39,41 @@ final readonly class Validator
      */
     public function validate(mixed $subject): TaskEither
     {
+        return $this->chain($subject)->mapLeft(self::asList(...));
+    }
+
+    /**
+     * Validates the subject and, when every rule passes, promotes it to the
+     * type returned by the promotion.
+     *
+     * @template U
+     *
+     * @param T $subject
+     * @param callable(T): Either<Error, U> $promote
+     *
+     * @return TaskEither<list<Error>, U>
+     */
+    public function validateInto(mixed $subject, callable $promote): TaskEither
+    {
+        return $this->chain($subject)
+            ->flatMap(static fn (mixed $validated): TaskEither => TaskEither::fromEither($promote($validated)))
+            ->mapLeft(self::asList(...));
+    }
+
+    /**
+     * @param T $subject
+     *
+     * @return TaskEither<Error, T>
+     */
+    private function chain(mixed $subject): TaskEither
+    {
         $chain = TaskEither::right($subject);
 
         foreach ($this->rules as $rule) {
             $chain = $chain->flatMap($rule->apply(...));
         }
 
-        return $chain->mapLeft(self::asList(...));
+        return $chain;
     }
 
     /**

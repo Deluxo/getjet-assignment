@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Shift\Application;
 
 use App\Shared\Error;
+use App\Shared\Functional\Either;
 use App\Shared\Functional\TaskEither;
 use App\Shared\Validation\Validator;
 use App\Shift\Application\Rule\CountryRule;
@@ -13,6 +14,7 @@ use App\Shift\Application\Rule\HolidayRule;
 use App\Shift\Application\Rule\ShiftLengthRule;
 use App\Shift\Application\Rule\ShiftWithinSameDayRule;
 use App\Shift\Domain\Port\In\CreateShift;
+use App\Shift\Domain\Port\In\CreateShiftCommand;
 use App\Shift\Domain\Port\In\CreateShiftRequest;
 use App\Shift\Domain\Port\Out\Shift;
 use App\Shift\Domain\Port\Out\ShiftEvents;
@@ -42,7 +44,10 @@ final class CreateShiftHandler implements CreateShift
             $this->lengthRule,
             $this->holidayRule,
         )
-            ->validate($request)
+            ->validateInto(
+                $request,
+                static fn (CreateShiftRequest $validated): Either => $validated->toCommand(),
+            )
             ->flatMap($this->persist(...))
             ->tap($this->events->shiftPersisted(...));
     }
@@ -50,14 +55,14 @@ final class CreateShiftHandler implements CreateShift
     /**
      * @return TaskEither<list<Error>, Shift>
      */
-    private function persist(CreateShiftRequest $request): TaskEither
+    private function persist(CreateShiftCommand $command): TaskEither
     {
         $shift = Shift::create(
-            $request->employeeId,
-            $request->date,
-            $request->startTime,
-            $request->endTime,
-            $request->countryCode,
+            $command->employeeId,
+            $command->date,
+            $command->startTime,
+            $command->endTime,
+            $command->countryCode,
         );
 
         return $this->shifts
