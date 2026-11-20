@@ -15,6 +15,7 @@ use App\Shift\Application\Rule\ShiftWithinSameDayRule;
 use App\Shift\Domain\Port\In\CreateShiftRequest;
 use App\Shift\Domain\Port\Out\Shift;
 use App\Tests\Unit\Shift\Application\Support\FakeHolidayCalendar;
+use App\Tests\Unit\Shift\Application\Support\FakeShiftEvents;
 use App\Tests\Unit\Shift\Application\Support\FakeShiftRepository;
 use PHPUnit\Framework\TestCase;
 
@@ -36,8 +37,9 @@ final class CreateShiftHandlerTest extends TestCase
     public function testReturnsTheStoredShiftWhenTheRequestIsValid(): void
     {
         $shifts = new FakeShiftRepository();
+        $events = new FakeShiftEvents();
 
-        $result = self::handler(new FakeHolidayCalendar(false), $shifts)
+        $result = self::handler(new FakeHolidayCalendar(false), $shifts, $events)
             ->invoke(self::request())
             ->run();
 
@@ -48,6 +50,35 @@ final class CreateShiftHandlerTest extends TestCase
         self::assertSame('employee-123', $shift->employeeId);
         self::assertSame('LT', $shift->countryCode);
         self::assertSame(1, $shifts->createCalls);
+        self::assertSame([$shift], $events->published);
+    }
+
+    public function testDoesNotPublishWhenTheShiftIsRejected(): void
+    {
+        $events = new FakeShiftEvents();
+
+        $result = self::handler(
+            new FakeHolidayCalendar(true),
+            new FakeShiftRepository(),
+            $events,
+        )->invoke(self::request())->run();
+
+        self::assertTrue($result->isLeft());
+        self::assertSame([], $events->published);
+    }
+
+    public function testDoesNotPublishWhenTheShiftCannotBeStored(): void
+    {
+        $events = new FakeShiftEvents();
+
+        $result = self::handler(
+            new FakeHolidayCalendar(false),
+            new FakeShiftRepository(new Error('shift_repository', 'The shift could not be saved.')),
+            $events,
+        )->invoke(self::request())->run();
+
+        self::assertTrue($result->isLeft());
+        self::assertSame([], $events->published);
     }
 
     public function testPassesCalendarErrorsThroughAsAList(): void
@@ -125,6 +156,7 @@ final class CreateShiftHandlerTest extends TestCase
     private static function handler(
         FakeHolidayCalendar $calendar,
         ?FakeShiftRepository $shifts = null,
+        ?FakeShiftEvents $events = null,
     ): CreateShiftHandler {
         return new CreateShiftHandler(
             new EmployeeIdRule(),
@@ -133,6 +165,7 @@ final class CreateShiftHandlerTest extends TestCase
             new ShiftLengthRule(),
             new HolidayRule($calendar),
             $shifts ?? new FakeShiftRepository(),
+            $events ?? new FakeShiftEvents(),
         );
     }
 

@@ -112,6 +112,22 @@ final class TaskEither implements Monad
     }
 
     /**
+     * Runs a side effect on the right value and passes it through unchanged.
+     *
+     * @param callable(T): void $effect
+     *
+     * @return self<E, T>
+     */
+    public function tap(callable $effect): self
+    {
+        return $this->map(static function (mixed $value) use ($effect): mixed {
+            $effect($value);
+
+            return $value;
+        });
+    }
+
+    /**
      * @template EF
      *
      * @param callable(E): EF $transform

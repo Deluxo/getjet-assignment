@@ -132,6 +132,35 @@ final class TaskEitherTest extends TestCase
         self::assertSame(0, $transform->calls);
     }
 
+    public function testTapRunsTheEffectOnRightAndPassesTheValueThrough(): void
+    {
+        $seen = [];
+        $taskEither = TaskEither::right(42)->tap(static function (int $value) use (&$seen): void {
+            $seen[] = $value;
+        });
+
+        self::assertSame([], $seen);
+        self::assertSame(
+            42,
+            $taskEither->run()->fold(
+                static fn (): int => -1,
+                static fn (int $value): int => $value,
+            ),
+        );
+        self::assertSame([42], $seen);
+    }
+
+    public function testTapIsSkippedOnLeft(): void
+    {
+        $called = false;
+        $taskEither = TaskEither::left(['error'])->tap(static function () use (&$called): void {
+            $called = true;
+        });
+
+        self::assertTrue($taskEither->run()->isLeft());
+        self::assertFalse($called);
+    }
+
     public function testFlatMapSequencesTaskEithers(): void
     {
         $order = [];

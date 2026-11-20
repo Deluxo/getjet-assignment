@@ -15,6 +15,7 @@ use App\Shift\Application\Rule\ShiftWithinSameDayRule;
 use App\Shift\Domain\Port\In\CreateShift;
 use App\Shift\Domain\Port\In\CreateShiftRequest;
 use App\Shift\Domain\Port\Out\Shift;
+use App\Shift\Domain\Port\Out\ShiftEvents;
 use App\Shift\Domain\Port\Out\ShiftRepository;
 
 final class CreateShiftHandler implements CreateShift
@@ -26,6 +27,7 @@ final class CreateShiftHandler implements CreateShift
         private readonly ShiftLengthRule $lengthRule,
         private readonly HolidayRule $holidayRule,
         private readonly ShiftRepository $shifts,
+        private readonly ShiftEvents $events,
     ) {}
 
     /**
@@ -41,7 +43,8 @@ final class CreateShiftHandler implements CreateShift
             $this->holidayRule,
         )
             ->validate($request)
-            ->flatMap($this->persist(...));
+            ->flatMap($this->persist(...))
+            ->tap($this->events->shiftPersisted(...));
     }
 
     /**
