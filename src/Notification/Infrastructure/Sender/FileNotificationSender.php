@@ -35,11 +35,13 @@ final readonly class FileNotificationSender implements NotificationSender
      */
     private function write(ShiftNotification $notification): Either
     {
-        try {
-            $line = json_encode($notification->toJson(), JSON_THROW_ON_ERROR).PHP_EOL;
-        } catch (\JsonException $exception) {
-            return $this->failure($notification, 'The notification could not be encoded.', $exception);
+        $encoded = json_encode($notification->toJson());
+
+        if (false === $encoded) {
+            return $this->failure($notification, 'The notification could not be encoded.');
         }
+
+        $line = $encoded.PHP_EOL;
 
         $directory = \dirname($this->file);
 
@@ -57,12 +59,11 @@ final readonly class FileNotificationSender implements NotificationSender
     /**
      * @return Either<Error, null>
      */
-    private function failure(ShiftNotification $notification, string $message, ?\Throwable $exception = null): Either
+    private function failure(ShiftNotification $notification, string $message): Either
     {
         $this->logger->warning($message, [
             'notification_id' => $notification->id(),
             'file' => $this->file,
-            'exception' => $exception,
         ]);
 
         return Either::Left(new Error('notification_sender', $message));

@@ -40,7 +40,8 @@ final class ScaffoldDomainCommand extends Command
 
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
-        $name = trim((string) $input->getArgument('name'));
+        $argument = $input->getArgument('name');
+        $name = is_string($argument) ? trim($argument) : '';
 
         if (1 !== preg_match('/^[A-Z][A-Za-z0-9]*$/', $name)) {
             $output->writeln(sprintf(
@@ -57,10 +58,10 @@ final class ScaffoldDomainCommand extends Command
             return Command::FAILURE;
         }
 
-        try {
-            $this->scaffold($name, $output);
-        } catch (\RuntimeException $exception) {
-            $output->writeln(sprintf('<error>%s</error>', $exception->getMessage()));
+        $error = $this->scaffold($name, $output);
+
+        if (null !== $error) {
+            $output->writeln(sprintf('<error>%s</error>', $error));
 
             return Command::FAILURE;
         }
@@ -68,7 +69,10 @@ final class ScaffoldDomainCommand extends Command
         return Command::SUCCESS;
     }
 
-    private function scaffold(string $name, OutputInterface $output): void
+    /**
+     * @return string|null the first failure, if any
+     */
+    private function scaffold(string $name, OutputInterface $output): ?string
     {
         foreach (self::DIRECTORIES as $relativePath) {
             $directory = $this->srcDir.'/'.$name.'/'.$relativePath;
@@ -76,17 +80,22 @@ final class ScaffoldDomainCommand extends Command
 
             if (is_dir($directory)) {
                 $output->writeln(sprintf('exists   %s', $displayPath));
-            } else {
-                $this->createDirectory($directory);
-                $output->writeln(sprintf('created  %s', $displayPath));
+
+                continue;
             }
+
+            if (!$this->createDirectory($directory)) {
+                return sprintf('Unable to create directory "%s".', $directory);
+            }
+
+            $output->writeln(sprintf('created  %s', $displayPath));
         }
+
+        return null;
     }
 
-    private function createDirectory(string $directory): void
+    private function createDirectory(string $directory): bool
     {
-        if (!@mkdir($directory, 0775, true) && !is_dir($directory)) {
-            throw new \RuntimeException(sprintf('Unable to create directory "%s".', $directory));
-        }
+        return is_dir($directory) || @mkdir($directory, 0775, true) || is_dir($directory);
     }
 }

@@ -98,8 +98,24 @@ final readonly class DoctrineNotificationStore implements NotificationStore
                     ],
                 )->fetchAllAssociative();
 
-                return Either::Right(array_map(self::hydrate(...), $rows));
-            } catch (DbalException|\UnexpectedValueException $exception) {
+                $notifications = [];
+
+                foreach ($rows as $row) {
+                    $notification = self::hydrate($row);
+
+                    if (null === $notification) {
+                        $this->logger->error('A stored shift notification cannot be read.', [
+                            'row' => $row,
+                        ]);
+
+                        return Either::Left(new Error('notification_store', 'Stored notifications are corrupt.'));
+                    }
+
+                    $notifications[] = $notification;
+                }
+
+                return Either::Right($notifications);
+            } catch (DbalException $exception) {
                 $this->logger->error('Could not load pending shift notifications.', [
                     'exception' => $exception,
                 ]);
@@ -148,39 +164,43 @@ final readonly class DoctrineNotificationStore implements NotificationStore
     /**
      * @param array<string, mixed> $row
      */
-    private static function hydrate(array $row): ShiftNotification
+    private static function hydrate(array $row): ?ShiftNotification
     {
-        return new ShiftNotification(
-            self::string($row, 'shift_id'),
-            self::string($row, 'employee_id'),
-            self::parse(self::string($row, 'date'), 'Y-m-d'),
-            self::parse(self::string($row, 'start_time'), 'H:i:s'),
-            self::parse(self::string($row, 'end_time'), 'H:i:s'),
-        );
+        $shiftId = self::string($row, 'shift_id');
+        $employeeId = self::string($row, 'employee_id');
+        $date = self::string($row, 'date');
+        $startTime = self::string($row, 'start_time');
+        $endTime = self::string($row, 'end_time');
+
+        if (null === $shiftId || null === $employeeId || null === $date || null === $startTime || null === $endTime) {
+            return null;
+        }
+
+        $parsedDate = self::parse($date, 'Y-m-d');
+        $parsedStartTime = self::parse($startTime, 'H:i:s');
+        $parsedEndTime = self::parse($endTime, 'H:i:s');
+
+        if (null === $parsedDate || null === $parsedStartTime || null === $parsedEndTime) {
+            return null;
+        }
+
+        return new ShiftNotification($shiftId, $employeeId, $parsedDate, $parsedStartTime, $parsedEndTime);
     }
 
     /**
      * @param array<string, mixed> $row
      */
-    private static function string(array $row, string $column): string
+    private static function string(array $row, string $column): ?string
     {
         $value = $row[$column] ?? null;
 
-        if (!is_string($value)) {
-            throw new \UnexpectedValueException(sprintf('Expected a string in column "%s".', $column));
-        }
-
-        return $value;
+        return is_string($value) ? $value : null;
     }
 
-    private static function parse(string $value, string $format): \DateTimeImmutable
+    private static function parse(string $value, string $format): ?\DateTimeImmutable
     {
         $date = \DateTimeImmutable::createFromFormat('!'.$format, $value);
 
-        if (false === $date) {
-            throw new \UnexpectedValueException(sprintf('Cannot parse "%s" as "%s".', $value, $format));
-        }
-
-        return $date;
+        return false === $date ? null : $date;
     }
 }

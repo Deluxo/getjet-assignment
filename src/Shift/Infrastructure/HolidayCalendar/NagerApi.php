@@ -126,8 +126,8 @@ final readonly class NagerApi implements HolidayCalendar
                 ));
             }
 
-            $payload = json_decode($response->getContent(false), false, 512, JSON_THROW_ON_ERROR);
-        } catch (HttpClientException | \JsonException $exception) {
+            $body = $response->getContent(false);
+        } catch (HttpClientException $exception) {
             $this->logger->warning('Could not fetch public holidays.', [
                 'country' => $country,
                 'year' => $year,
@@ -137,6 +137,20 @@ final readonly class NagerApi implements HolidayCalendar
             return Either::Left(new Error(
                 'holiday_calendar',
                 'The public holiday calendar is unavailable.',
+            ));
+        }
+
+        $payload = json_decode($body, false, 512);
+
+        if (JSON_ERROR_NONE !== json_last_error()) {
+            $this->logger->warning('The public holiday calendar returned invalid JSON.', [
+                'country' => $country,
+                'year' => $year,
+            ]);
+
+            return Either::Left(new Error(
+                'holiday_calendar',
+                'The public holiday calendar is unavailable (invalid response).',
             ));
         }
 

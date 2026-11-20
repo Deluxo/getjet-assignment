@@ -12,14 +12,6 @@ use App\Shared\Functional\Maybe;
  */
 final readonly class Nothing extends Maybe
 {
-    /**
-     * @return never
-     */
-    public function value(): mixed
-    {
-        throw new \LogicException('Nothing has no value.');
-    }
-
     public function isJust(): bool
     {
         return false;

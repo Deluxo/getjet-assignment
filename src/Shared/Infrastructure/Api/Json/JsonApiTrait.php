@@ -26,9 +26,9 @@ trait JsonApiTrait
             return Either::Left('Payload is required.');
         }
 
-        try {
-            $decoded = json_decode($content, false, 512, JSON_THROW_ON_ERROR);
-        } catch (\JsonException) {
+        $decoded = json_decode($content, false, 512);
+
+        if (JSON_ERROR_NONE !== json_last_error()) {
             return Either::Left('Invalid JSON.');
         }
 
