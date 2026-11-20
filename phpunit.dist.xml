@@ -12,6 +12,7 @@
     <php>
         <server name="APP_ENV" value="test" force="true" />
         <server name="KERNEL_CLASS" value="App\Kernel" force="true" />
+        <env name="SHIFT_NOTIFICATIONS_ENABLED" value="1"/>
         <!-- ###+ doctrine/doctrine-bundle ### -->
         <!-- Format described at https://www.doctrine-project.org/projects/doctrine-dbal/en/latest/reference/configuration.html#connecting-using-a-url -->
         <!-- IMPORTANT: You MUST configure your server version, either here or in config/packages/doctrine.yaml -->
