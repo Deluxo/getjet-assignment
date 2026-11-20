@@ -22,3 +22,4 @@ services:
     App\Shift\Domain\Port\Out\ShiftRepository: '@App\Shift\Infrastructure\Persistence\Doctrine\DoctrineShiftRepository'
     App\Shift\Domain\Port\Out\ShiftEvents: '@App\Shift\Infrastructure\Event\Emitter\SymfonyShiftEvents'
     App\Notification\Domain\Port\Out\NotificationStore: '@App\Notification\Infrastructure\Persistence\Doctrine\DoctrineNotificationStore'
+    App\Notification\Domain\Port\Out\NotificationSender: '@App\Notification\Infrastructure\Sender\FileNotificationSender'
