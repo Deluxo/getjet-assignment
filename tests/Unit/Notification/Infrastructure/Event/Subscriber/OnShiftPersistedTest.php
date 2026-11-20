@@ -45,14 +45,29 @@ final class OnShiftPersistedTest extends TestCase
         self::assertSame([], $store->recorded);
     }
 
+    public function testDoesNothingWhenNotificationsAreDisabled(): void
+    {
+        $store = new FakeNotificationStore();
+        $sender = new FakeNotificationSender();
+        $logger = $this->createMock(LoggerInterface::class);
+        $logger->expects(self::never())->method('error');
+
+        self::subscriber($store, $sender, $logger, enabled: false)(new ShiftPersisted(self::shift()));
+
+        self::assertSame([], $store->recorded);
+        self::assertSame([], $sender->sent);
+    }
+
     private static function subscriber(
         FakeNotificationStore $store,
         FakeNotificationSender $sender,
         ?LoggerInterface $logger = null,
+        bool $enabled = true,
     ): OnShiftPersisted {
         return new OnShiftPersisted(
             new RecordNotification($store, new SendNotification($sender, $store, new NullLogger())),
             $logger ?? new NullLogger(),
+            $enabled,
         );
     }
 }
