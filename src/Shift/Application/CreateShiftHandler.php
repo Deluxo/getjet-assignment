@@ -51,9 +51,9 @@ final class CreateShiftHandler implements CreateShift
     {
         $shift = Shift::create(
             $request->employeeId,
-            $request->date ?? throw new \LogicException('Validation guarantees a parsed date.'),
-            $request->startTime ?? throw new \LogicException('Validation guarantees a parsed start time.'),
-            $request->endTime ?? throw new \LogicException('Validation guarantees a parsed end time.'),
+            $request->date,
+            $request->startTime,
+            $request->endTime,
             $request->countryCode,
         );
 
